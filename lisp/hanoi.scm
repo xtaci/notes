@@ -1,0 +1,12 @@
+(define (hanoi-move N FROM TO SPARE) 
+	(cond ((= N 0) "DONE")
+		(else
+			(hanoi-move (- N 1) FROM SPARE TO)
+			(display FROM)
+			(display "->")
+			(display TO)
+			(display "\n")
+			(hanoi-move (- N 1) SPARE TO FROM)
+		)
+	)
+)
