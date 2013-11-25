@@ -9,5 +9,7 @@ int main(void) {
 	printf("%d %d %d %d %s\n", t->tm_sec, t->tm_min, t->tm_hour, t->tm_mday, t->tm_zone);
 	t = gmtime(&x);
 	printf("%d %d %d %d %s\n", t->tm_sec, t->tm_min, t->tm_hour, t->tm_mday, t->tm_zone);
+	time_t tt = mktime(t);
+	printf("%s\n", ctime(&tt));
 	exit(0);
 }
