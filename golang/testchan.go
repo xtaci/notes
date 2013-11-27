@@ -12,4 +12,7 @@ func main() {
 	c <- s[:]
 	s[0] = 10
 	fmt.Println(<-c)
+
+	close(c)
+	fmt.Println(<-c)
 }
