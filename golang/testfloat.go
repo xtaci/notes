@@ -29,4 +29,9 @@ func main() {
 	d1, err := strconv.ParseFloat("0.2", 32)
 	d2, err := strconv.ParseFloat("0.4", 32)
 	fmt.Println(d1,d2,d1+d2)
+
+	for i:=float32(0.1);i < 1;i+=0.1 {
+		testx = 10000000
+		fmt.Println(testx + i)
+	}
 }
