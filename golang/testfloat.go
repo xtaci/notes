@@ -1,17 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 	"strconv"
-	"fmt"
 )
+
 func main() {
 	x := int64(100000)
-	const Y = 3*60
-	// comparable 
-	if (x > Y*1.1) {
-		fmt.Println(reflect.TypeOf(Y*1.1))
+	const Y = 3 * 60
+	// comparable
+	if x > Y*1.1 {
+		fmt.Println(reflect.TypeOf(Y * 1.1))
 		fmt.Println(reflect.TypeOf(x))
 	}
 
@@ -28,9 +29,9 @@ func main() {
 
 	d1, err := strconv.ParseFloat("0.2", 32)
 	d2, err := strconv.ParseFloat("0.4", 32)
-	fmt.Println(d1,d2,d1+d2)
+	fmt.Println(d1, d2, d1+d2)
 
-	for i:=float32(0.1);i < 1;i+=0.1 {
+	for i := float32(0.1); i < 1; i += 0.1 {
 		testx = 10000000
 		fmt.Println(testx + i)
 	}

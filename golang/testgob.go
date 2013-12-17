@@ -8,7 +8,7 @@ import (
 
 func main() {
 	xxx := make(map[int32]int32)
-	for i:=int32(0);i<10;i++ {
+	for i := int32(0); i < 10; i++ {
 		xxx[i] = i
 	}
 
