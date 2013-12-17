@@ -8,9 +8,8 @@ func fun(f func()) {
 
 func main() {
 	x := 1
-	lambda := func() {
+	fun(func() {
 		x++
 		println(x)
-	}
-	fun(lambda)
+	})
 }
