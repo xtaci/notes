@@ -19,6 +19,7 @@ func fun2() {
 }
 
 func main() {
-	fun2()
+	go fun2()
+	go fun2()
 	time.Sleep(10)
 }
