@@ -1,8 +1,8 @@
 package main
 
 import (
-	"regexp"
 	"fmt"
+	"regexp"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	fmt.Println(re.FindStringSubmatch("/res  10000 "))
 	fmt.Println(re.FindStringSubmatch("res 10000 "))
 
-	 reg, _ := regexp.Compile("(?i:fuck)")
+	reg, _ := regexp.Compile("(?i:fuck)")
 	fmt.Println(reg.ReplaceAllString("FUCK YOU", "*"))
 	fmt.Println(reg.ReplaceAllString("fuck you", "*"))
 }

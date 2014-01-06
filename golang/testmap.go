@@ -11,4 +11,7 @@ func main() {
 	m[""] = ""
 	v, ok = m[""]
 	fmt.Println(v, ok)
+	var x map[string]string
+	v, ok = x["xx"]
+	fmt.Println(v, ok)
 }

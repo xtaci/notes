@@ -1,11 +1,11 @@
 package main
 
 import (
-	"io/ioutil"
-	"compress/zlib"
-	"compress/flate"
 	"bytes"
+	"compress/flate"
+	"compress/zlib"
 	"fmt"
+	"io/ioutil"
 )
 
 var teststr2 = `[
