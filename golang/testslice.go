@@ -5,6 +5,9 @@ import (
 )
 
 func main() {
-	s := make([]int, 0, 0)
-	fmt.Println(append(s[:0], s[1:]...))
+	arr := []int{1, 2, 3, 4, 5}
+	slice := arr[1:2]
+	slice = append(slice, 6, 7, 8)
+	fmt.Println(slice)
+	fmt.Println(arr)
 }
