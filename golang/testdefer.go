@@ -6,10 +6,13 @@ import (
 
 func main() {
 	defer func() {
+
 		if x := recover(); x != nil {
 			fmt.Println(x)
 		}
+		//	R()
 	}()
+
 	defer func() {
 		fmt.Println("###P2")
 		panic("P2")
@@ -17,4 +20,8 @@ func main() {
 	}()
 
 	panic("xx")
+}
+
+func R() {
+
 }
