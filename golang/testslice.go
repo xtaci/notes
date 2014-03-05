@@ -4,12 +4,18 @@ import (
 	"fmt"
 )
 
-func main() {
-	arr := []int{1, 2, 3, 4, 5}
+type X struct {
+	A int
+}
 
-	fmt.Println(arr[:10000])
-	slice := arr[1:2]
-	slice = append(slice, 6, 7, 8)
-	fmt.Println(slice)
-	fmt.Println(arr)
+func main() {
+	mm := make([]X, 10)
+
+	temp := X{100}
+
+	for k := range mm {
+		mm[k] = temp
+	}
+
+	fmt.Println(mm)
 }
