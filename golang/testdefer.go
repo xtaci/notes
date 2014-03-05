@@ -1,27 +1,13 @@
 package main
 
-import (
-	"fmt"
-)
-
-func main() {
+func test() (value float64) {
 	defer func() {
-
-		if x := recover(); x != nil {
-			fmt.Println(x)
-		}
-		//	R()
+		value = value * 1.25
 	}()
 
-	defer func() {
-		fmt.Println("###P2")
-		panic("P2")
-		fmt.Println("###P3")
-	}()
-
-	panic("xx")
+	return 100
 }
 
-func R() {
-
+func main() {
+	println(test())
 }

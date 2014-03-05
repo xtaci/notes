@@ -6,6 +6,9 @@ import (
 )
 
 func main() {
-	var t time.Time
-	fmt.Println(time.Now().Sub(t))
+	fmt.Println(time.Now())
+	for i := 0; i < 1000000; i++ {
+		time.Now()
+	}
+	fmt.Println(time.Now())
 }
