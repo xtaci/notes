@@ -10,8 +10,18 @@ type X struct {
 	X []int
 }
 
+func (x *X) Fun1() {
+	x.A = 1
+}
+
+type AliasX X
+
+func (ax *AliasX) Fun2() {
+	ax.B = "1"
+}
+
 func main() {
-	x := X{}
-	fmt.Println(cap(x.X), len(x.X))
-	x.X = append(x.X[:0], x.X[1:]...)
+	x := &X{}
+	x.Fun1()
+	x.Fun2()
 }
