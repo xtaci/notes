@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	x, err := json.Marshal(int64(12341231234134134))
+	x, err := json.Marshal([]byte{1, 2, 3, 4, 5})
 	fmt.Println(string(x), err)
 }
