@@ -8,7 +8,7 @@ static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 void sig_handler(int);
 
 int main(void) {
-	// init signal
+	// init signal handler
 	signal(SIGUSR1, sig_handler);
 
 	// lock
