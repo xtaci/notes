@@ -7,8 +7,9 @@ int main(void) {
 		perror("popen");
 	}
 
-	while(fgets(buf, 1024, fp)!=0) {
-		printf("%s",buf);
+	while(!feof(fp)) {
+		size_t n = fread(buf, 1, 1024, fp);
+		write(1, buf, n);
 	}
 	pclose(fp);
 }
