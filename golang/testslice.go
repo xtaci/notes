@@ -17,5 +17,8 @@ func main() {
 		mm[k] = temp
 	}
 
+	ptr := &mm[5]
+	ptr.A = 9999
+	mm = append(mm, X{88})
 	fmt.Println(mm)
 }
