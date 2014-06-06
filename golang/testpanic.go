@@ -1,8 +1,18 @@
 package main
 
+import (
+	"fmt"
+)
+
 func main() {
-	defer func() {
-		recover()
-	}()
-	panic("test")
+	for i:=0;i<10;i++ {
+		func() {
+			defer func() {
+				if x := recover();x!=nil {
+					fmt.Println(x)
+				}
+			}()
+			panic("test")
+		}()
+	}
 }

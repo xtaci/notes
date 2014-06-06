@@ -13,8 +13,8 @@ func main() {
 			select {
 			case x, ok := <-c1:
 				println("c1", x, ok)
-			case x, ok := <-c2:
-				println("c2", x, ok)
+			case c2<-1:
+				println("c2")
 			}
 		}
 	}()

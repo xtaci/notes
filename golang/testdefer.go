@@ -9,5 +9,15 @@ func test() (value float64) {
 }
 
 func main() {
-	println(test())
+	defer func() {
+		dealpanic()
+	}()
+
+	panic("test")
+}
+
+func dealpanic() {
+	if x:=recover();x!=nil {
+			println(x)
+	}
 }
