@@ -13,7 +13,7 @@ func main() {
 			select {
 			case x, ok := <-c1:
 				println("c1", x, ok)
-			case c2<-1:
+			case c2 <- 1:
 				println("c2")
 			}
 		}

@@ -17,7 +17,7 @@ func main() {
 }
 
 func dealpanic() {
-	if x:=recover();x!=nil {
-			println(x)
+	if x := recover(); x != nil {
+		println(x)
 	}
 }
