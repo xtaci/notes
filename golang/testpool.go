@@ -6,10 +6,7 @@ import (
 )
 
 func main() {
-	pool := sync.Pool{}
-	fmt.Println(pool.Get())
-
-	m := make([]int, 0, 10)
-	fmt.Println(len(m[:10]))
-	fmt.Println(m.([]int))
+	p := sync.Pool{}
+	p.New = func() interface{} { return make([]int, 10) }
+	fmt.Println(p.Get())
 }

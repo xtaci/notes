@@ -5,15 +5,18 @@ import (
 	"time"
 )
 
+type X struct {
+	A int
+}
+
 func main() {
-	x := 100
-	send := func(a int) {
-		fmt.Println(a, x)
+	send := func(x X) {
+		fmt.Println(x)
 	}
 
 	for i := 0; i < 10; i++ {
-		go send(i)
-		send(i)
+		x := X{i}
+		go send(x)
 	}
 	time.Sleep(time.Second)
 }
