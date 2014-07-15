@@ -11,4 +11,7 @@ func main() {
 
 	x := make([]float32, 3)
 	copy(x, a[:])
+
+	str := "abc"
+	println(str[:2])
 }
