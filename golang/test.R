@@ -1,0 +1,5 @@
+library(rjson)
+args <- commandArgs(TRUE)
+eval(parse(text=args[1]))
+x <-seq(-5,5,0.1)
+cat(toJSON(sin(x)))

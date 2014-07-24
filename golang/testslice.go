@@ -24,4 +24,5 @@ func main() {
 		mm = append(mm, X{88})
 	}
 	fmt.Println(mm[:10])
+	fmt.Println(append(mm))
 }
