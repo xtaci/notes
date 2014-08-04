@@ -5,15 +5,15 @@ import (
 )
 
 func main() {
-	ch := time.After(time.Second)
+	ch := time.NewTimer(time.Second)
 
 	x := 0
 	for {
 		select {
-		case <-ch:
+		case <-ch.C:
 			x++
 			println(x)
-			ch = time.After(time.Second)
+			ch.Reset(time.Second)
 		}
 	}
 }
