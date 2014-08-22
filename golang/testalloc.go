@@ -45,8 +45,8 @@ func test_allocbyte() {
 }
 
 func allocbyte(size int) []byte {
-//	_alloc_lock.Lock()
-//	defer _alloc_lock.Unlock()
+	//	_alloc_lock.Lock()
+	//	defer _alloc_lock.Unlock()
 	if _pos+size > len(_buf) {
 		_buf = make([]byte, 1024*1024)
 		_pos = 0
