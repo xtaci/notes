@@ -11,12 +11,25 @@ type Packet struct {
 	data []byte
 }
 
+var _dum []byte
+
+func init() {
+	_dum = make([]byte, 10)
+}
+
+func get() []byte {
+	return _dum
+}
+
 func main() {
+	var ret []byte
+	<-time.After(2 * time.Second)
 	start := time.Now()
 	N := 1
 	for i := 0; i < N; i++ {
-		packet.Pack(1, nil)
+		ret = packet.Pack(1, nil, nil)
 	}
 	end := time.Now()
 	fmt.Println(end.Sub(start))
+	fmt.Println(ret)
 }
