@@ -1,0 +1,32 @@
+go语言自测问题:
+1. map支持的key有哪些数据类型，如果我想使用不支持的key类型，怎么处理？
+
+2. 下面的代码有什么问题，为什么
+func main() {
+	defer func() {
+		dealpanic()
+		// finish other jobs
+	}()
+
+	panic("test")
+}
+
+func dealpanic() {
+	if x:=recover();x!=nil {
+		println(x)
+	}
+}
+
+3. 如果打开一个文件，不关闭，go语言会自动关闭文件并回收文件描述么？如果有，什么时候回收？
+
+4. slice作为函数参数的时候，如果在被调用函数中对执行append，会发生什么？
+
+5. 往一个nil chan发送、接收会发生什么，往一个closed chan发送和接收会发生什么？
+
+6. 一个goroutine的开销有哪些，有多大？
+
+7. 用go语言实现一个并行的merge sort。
+
+8. 在go语言中, a := uint8(1), b := uint8(2), 问a-b的输出?
+
+9. 在go语言中, 对一个slice进行 for k:=range s ，k是值还是数组下标?
