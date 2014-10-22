@@ -1,9 +1,13 @@
 package main
 
+func get() []int {
+	println("get called")
+	return []int{1, 2, 3, 4, 5}
+}
+
 func main() {
-	x := []int{1, 2, 3}
 	k := 0
-	for k = range x {
+	for k = range get() {
 		println("loop ", k)
 	}
 	println(k)

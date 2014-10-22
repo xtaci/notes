@@ -30,3 +30,19 @@ func dealpanic() {
 8. 在go语言中, a := uint8(1), b := uint8(2), 问a-b的输出?
 
 9. 在go语言中, 对一个slice进行 for k:=range s ，k是值还是数组下标?
+
+10. 以下程序的输出结果是什么?
+package main
+
+func get() []int {
+	println("get called")
+	return []int{1, 2, 3, 4, 5}
+}
+
+func main() {
+	k := 0
+	for k = range get() {
+		println("loop ", k)
+	}
+	println(k)
+}
