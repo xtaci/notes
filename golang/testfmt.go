@@ -15,4 +15,5 @@ func main() {
 	DEBUG("1", "2")
 	DEBUG("weapon", "level", 18, "armor_level", 18)
 	fmt.Println("weapon", "level", 18, "armor_level", 18)
+	fmt.Printf("%v, %v", 1)
 }
