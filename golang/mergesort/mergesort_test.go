@@ -2,10 +2,10 @@ package mergesort
 
 import (
 	//	"sort"
-//	"fmt"
+	//	"fmt"
+	"helper"
 	"runtime"
 	"testing"
-	"helper"
 )
 
 const N = 100000000
@@ -25,7 +25,7 @@ func TestMergesort(t *testing.T) {
 		return false
 	})
 
-//	fmt.Println(slice)
+	//	fmt.Println(slice)
 }
 
 /*

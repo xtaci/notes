@@ -3,8 +3,8 @@ package mergesort
 import (
 	"container/heap"
 	"runtime"
-	"sync"
 	"sort"
+	"sync"
 )
 
 // An Item is something we manage in a priority queue.
@@ -97,14 +97,14 @@ func _qs(sli []int, wg *sync.WaitGroup) {
 // 注意，直接使用的时候最好设置一下GOMAXPROCS，避免调度的问题
 func Mergesort(slice []int, less func(a, b int) bool) {
 	n := runtime.NumCPU()
-	sz := len(slice)/n
+	sz := len(slice) / n
 
 	// quicksort first
 	wg := &sync.WaitGroup{}
 	wg.Add(n)
-	i:=0
-	for ;i<n-1;i++ {
-		go _qs(slice[i*sz : (i+1) * sz], wg)
+	i := 0
+	for ; i < n-1; i++ {
+		go _qs(slice[i*sz:(i+1)*sz], wg)
 	}
 	go _qs(slice[i*sz:], wg)
 	wg.Wait()

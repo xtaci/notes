@@ -6,11 +6,11 @@ import (
 )
 
 type WordOld struct {
-	Words  string
+	Words string
 }
 
 type WordNew struct {
-	Words  string `msgpack:"W"`
+	Words string `msgpack:"W"`
 }
 
 func main() {
@@ -20,5 +20,5 @@ func main() {
 
 	n := WordNew{}
 	err = msgpack.Unmarshal(b, &n)
-	fmt.Println(n,err)
+	fmt.Println(n, err)
 }

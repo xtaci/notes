@@ -1,19 +1,19 @@
 package main
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"fmt"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type X struct {
 	Data map[int32]int32
-	MQ chan int	`bson:"-"`
+	MQ   chan int `bson:"-"`
 }
 
 func main() {
-	x := X{Data:make(map[int32]int32)}
+	x := X{Data: make(map[int32]int32)}
 	x.Data[1] = 1
-	buf, err:= bson.Marshal(x)
+	buf, err := bson.Marshal(x)
 	fmt.Println(err)
 	y := X{}
 	bson.Unmarshal(buf, &y)

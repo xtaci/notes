@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/vmihailenco/msgpack"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/vmihailenco/msgpack"
 	"testing"
-//	. "types"
+	//	. "types"
 )
 
 func BenchmarkMsgPack(b *testing.B) {
