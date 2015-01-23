@@ -40,6 +40,8 @@ func (p *Parser) term() {
 	if p.lookahead >= 48 && p.lookahead <= 57 {
 		print(string(p.lookahead))
 		p.match(p.lookahead)
+	} else {
+		panic("syntax error")
 	}
 }
 
