@@ -6,7 +6,7 @@ use strict;
 
 use warnings;
 
-our $record;
+my $record;
 
 $record = 4;
 
