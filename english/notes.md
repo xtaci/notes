@@ -67,3 +67,24 @@ i distinctly recall ...
 #
 think things over...
 it's not unlikely
+
+
+
+# saying what you prefer
+i'd go for ..
+i'd rather ...
+i like .. better than ... 
+i enjoy .. .more than
+i find ... more interesting than
+as far as i'm concerned... are more fun than ...
+if it was up to me, i'd ... 
+i'd prefer ... if possible.. 
+i tend to prefer ..  
+rather than ... i'd much prefer to ... 
+my preference would always be new york.
+
+# option
+# asking for someone's opinion
+
+
+bear to be apart from my family for such a long time
