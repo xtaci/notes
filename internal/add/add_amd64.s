@@ -1,0 +1,5 @@
+TEXT	.Add+0(SB),4,$0-24
+MOVQ	a+8(FP),AX
+ADDQ	b+16(FP),AX
+MOVQ	AX,ret+24(FP)
+RET	,
