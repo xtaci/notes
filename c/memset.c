@@ -15,10 +15,15 @@ main(void) {
 }
 
 void
-my_memset(void * s, char c, int n) {
-	int i;
+my_memset(void * restrict s, char c, int n) {
+	if (n<=0) {
+		return;
+	}
+
 	int ws = sizeof(uintptr_t);
 	uintptr_t expand = 0;
+
+	int i;
 	for (i=0;i<ws;i++) {
 		expand |= (0xff&(uintptr_t)c)<<8*i;
 	}
