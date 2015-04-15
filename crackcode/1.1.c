@@ -9,8 +9,8 @@ int
 main(void) {
 	char s1[] = "hello";
 	char s2[] = "thanks";
-	printf("%d\n", unique(s1, sizeof(s1)));
-	printf("%d\n", unique(s2, sizeof(s2)));
+	printf("%d\n", unique(s1, sizeof(s1)-1));
+	printf("%d\n", unique(s2, sizeof(s2)-1));
 }
 
 bool 
