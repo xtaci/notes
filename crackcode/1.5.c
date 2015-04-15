@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char * quote(char * restrict s, int n);
+char * quote(char * restrict s, size_t n);
 
 int 
 main(void) {
@@ -12,7 +12,7 @@ main(void) {
 }
 
 char * 
-quote(char * restrict s, int n) {
+quote(char * restrict s, size_t n) {
 	int num_spaces = 0;
 	for (int i=0;i<n;i++) {
 		if (s[i] == ' ') {

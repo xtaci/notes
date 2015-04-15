@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-char * reverse(char * restrict s, int n);
+char * reverse(char * restrict s, size_t n);
 
 int 
 main(void) {
@@ -14,7 +14,7 @@ main(void) {
 }
 
 char *
-reverse(char * restrict s, int n) {
+reverse(char * restrict s, size_t n) {
 	for (int i=0;i<n/2;i++) {
 		char b = s[i];
 		s[i] = s[n-i-1];

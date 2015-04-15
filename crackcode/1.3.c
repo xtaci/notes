@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-char * removedup(char * restrict s, int n);
+char * removedup(char * restrict s, size_t n);
 
 int
 main(void) {
@@ -13,7 +13,7 @@ main(void) {
 	printf("%s\n", removedup(s3, sizeof(s3)-1));
 }
 
-char * removedup(char * restrict s, int n) {
+char * removedup(char * restrict s, size_t n) {
 	for (int i=0;i<n;i++) {
 		for (int j=i+1;j<n;j++) {
 			if (s[i] == s[j]) {
