@@ -20,5 +20,8 @@ main(void) {
 
 	printf("convert %f to %6e, print with g %g %g\n", pi, pi*100, 123456789.0f, 0.0000001);
 	printf("convert with a: %a\n", pi);
-	printf("print pointer %p", main);
+	printf("print pointer %p\n", main);
+
+	long double ld = pi;
+	printf("long double: %Lf\n", ld);
 }
