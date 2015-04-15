@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-bool unique(char * s, size_t len);
+bool unique(const char * s, size_t len);
 
 int 
 main(void) {
@@ -14,7 +14,7 @@ main(void) {
 }
 
 bool 
-unique(char *restrict s, size_t len) {
+unique(const char *restrict s, size_t len) {
 	bool test[256];
 	memset(test, 0, sizeof(bool) * 256);
 

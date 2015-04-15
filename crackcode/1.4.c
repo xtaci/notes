@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-bool anagram(char * restrict s1, size_t n1, char * restrict s2, size_t n2);
+bool anagram(const char * restrict s1, size_t n1, char * restrict s2, size_t n2);
 
 int
 main(void) {
@@ -13,7 +13,7 @@ main(void) {
 }
 
 bool
-anagram(char * restrict s1, size_t n1, char * restrict s2, size_t n2) {
+anagram(const char * restrict s1, size_t n1, char * restrict s2, size_t n2) {
 	if (n1!=n2) {
 		return false;
 	}

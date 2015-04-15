@@ -2,7 +2,7 @@
 
 const int N = 4;
 
-void print_m(int m[][N]);
+void print_m(const int m[][N]);
 void rotate_m(int m[][N]);
 
 int
@@ -19,7 +19,7 @@ main(void) {
 }
 
 void
-print_m(int m[][N]) {
+print_m(const int m[][N]) {
 	for (int i=0;i<N;i++) {
 		printf("%d %d %d %d\n", m[i][0], m[i][1],m[i][2], m[i][3]);
 	}
