@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stddef.h>
 
 int 
 main(void) {
@@ -24,4 +25,7 @@ main(void) {
 
 	long double ld = pi;
 	printf("long double: %Lf\n", ld);
+
+	ptrdiff_t diff = (void*)printf- (void*)main;
+	printf("%p, %p, diff : %lx\n", main, printf, diff);
 }
