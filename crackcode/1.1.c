@@ -7,8 +7,10 @@ bool unique(char * s, int len);
 
 int 
 main(void) {
-	printf("%d\n", unique("hello", 5));
-	printf("%d\n", unique("thanks", 6));
+	char s1[] = "hello";
+	char s2[] = "thanks";
+	printf("%d\n", unique(s1, sizeof(s1)));
+	printf("%d\n", unique(s2, sizeof(s2)));
 }
 
 bool 
