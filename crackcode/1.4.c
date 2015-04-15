@@ -21,13 +21,13 @@ anagram(char * restrict s1, int n1, char * restrict s2, int n2) {
 	for (int i=0;i<n1;i++){
 		for (int j=0;j<n2;j++) {
 			if (s1[i] == s2[j]) {
-				s2[j] =0;
+				s2[j] = 0;
 			}
 		}
 	}
 
 	for (int j=0;j<n2;j++) {
-		if(s2[j] >0) return false;
+		if (s2[j] > 0) return false;
 	}
 	return true;
 }
