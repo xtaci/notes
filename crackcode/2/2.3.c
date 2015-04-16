@@ -8,37 +8,40 @@ struct Node {
 
 struct Node * create_list();
 void print_list(struct Node * head);
-int lastnth(struct Node * head, size_t n);
+void delete_middle(struct Node * n);
 
 int 
 main(void) {
 	struct Node * list = create_list();
-	print_list(list);
-	printf("3rd :%d\n", lastnth(list,3));
-	printf("5th: %d\n", lastnth(list,5));
-}
-
-int 
-lastnth(struct Node * head, size_t n) {
-	struct Node * p = head, *p2 = head;
-
-	for (int i=0;i<n-1;i++) {
+	struct Node * p = list;
+	for (int i=0;i<2;i++) {
 		p = p->next;
 	}
 
-	while(p->next!=NULL)	{
-		p=p->next;
-		p2=p2->next;
-	}
+	print_list(list);
+	printf("delete %d %p\n", p->data, p);
+	delete_middle(p);
+	print_list(list);
+}
 
-	return p2->data;
+void
+delete_middle(struct Node * n) {
+	struct Node * tmp;
+	while(n->next != NULL) {
+		n->data = n->next->data;
+		tmp = n->next;
+		n->next = n->next->next;
+		n = tmp;
+	}
+	
+	free(n);
 }
 
 void 
 print_list(struct Node * head) {
 	printf("head->");
 	for (struct Node *p = head;p!=NULL; p=p->next) {
-		printf("%d->", p->data);
+		printf("(%d %p)->", p->data, p);
 	}
 	printf("NULL\n");
 }
