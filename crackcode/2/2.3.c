@@ -26,15 +26,10 @@ main(void) {
 
 void
 delete_middle(struct Node * n) {
-	struct Node * tmp;
-	while(n->next != NULL) {
-		n->data = n->next->data;
-		tmp = n->next;
-		n->next = n->next->next;
-		n = tmp;
-	}
-	
-	free(n);
+	struct Node * next= n->next;
+	n->next = next->next;
+	n->data = next->data;
+	free(next);
 }
 
 void 
