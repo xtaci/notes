@@ -23,8 +23,7 @@ listrev(struct Node * p) {
 		return p;
 	}
 
-	struct Node * tmp;
-	struct Node * head = NULL;
+	struct Node * head = NULL, *tmp;
 
 	while (p != NULL) {
 		tmp = p->next;
