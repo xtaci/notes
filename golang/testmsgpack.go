@@ -2,23 +2,25 @@ package main
 
 import (
 	"fmt"
-	"github.com/vmihailenco/msgpack"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-type WordOld struct {
-	Words string
+type Inner struct {
+	A int
+	B int
 }
 
-type WordNew struct {
-	Words string `msgpack:"W"`
+type Word struct {
+	Words string
+	In    Inner
 }
 
 func main() {
-	old := WordNew{"HELLO"}
-	b, err := msgpack.Marshal(old)
+	w := Word{"HELLO", Inner{10, 20}}
+	b, err := msgpack.Marshal(w)
 	fmt.Println(string(b), err)
 
-	n := WordNew{}
+	n := make(map[string]interface{})
 	err = msgpack.Unmarshal(b, &n)
 	fmt.Println(n, err)
 }
