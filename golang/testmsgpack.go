@@ -13,10 +13,11 @@ type Inner struct {
 type Word struct {
 	Words string
 	In    Inner
+	X     int
 }
 
 func main() {
-	w := Word{"HELLO", Inner{10, 20}}
+	w := Word{"HELLO", Inner{10, 20}, 10}
 	b, err := msgpack.Marshal(w)
 	fmt.Println(string(b), err)
 
