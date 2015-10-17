@@ -34,15 +34,15 @@ var (
 	rt *rtreego.Rtree
 )
 
-func init() {
+func BenchmarkRtreeInsert(b *testing.B) {
 	rand.Seed(time.Now().Unix())
 	rt = rtreego.NewTree(4, 10, 20)
 	const N = 10000
-	for i := 0; i < N; i++ {
+	for i := 0; i < b.N; i++ {
 		rt.Insert(&Thing{rtreego.Point{rand.Float64() * N, rand.Float64() * N, HOTEL, float64(i % 4)}, "汉庭"})
 	}
 
-	for i := 0; i < N; i++ {
+	for i := 0; i < b.N; i++ {
 		rt.Insert(&Thing{rtreego.Point{rand.Float64() * N, rand.Float64() * N, KTV, float64(i % 4)}, "天上人间"})
 	}
 }
