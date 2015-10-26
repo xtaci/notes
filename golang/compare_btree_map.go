@@ -14,7 +14,7 @@ func main() {
 }
 
 func bench_btree(n int) {
-	tr := btree.New(100)
+	tr := btree.New(10)
 	start := time.Now()
 	for i := 0; i < n; i++ {
 		tr.ReplaceOrInsert(btree.Int(i))
