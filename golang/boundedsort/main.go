@@ -6,6 +6,9 @@ import (
 	"math"
 )
 
+// memeory BOUND to 2*num integers (heap + reverse)
+const BOUND = 20
+
 func main() {
 	const N = 1000
 	input := make([]int, N)
@@ -18,6 +21,8 @@ func main() {
 	sort(input)
 }
 
+// copy from container/heap demo
+///////////////////////////////////////////////////////////////////////////////
 // An IntHeap is a min-heap of ints.
 type IntHeap []int
 
@@ -39,20 +44,10 @@ func (h *IntHeap) Pop() interface{} {
 	return x
 }
 
-func (h IntHeap) Update(o, n int) {
-	for i := range h {
-		if h[i] == o {
-			h[i] = n
-			heap.Fix(&h, i)
-			return
-		}
-	}
-}
-
-const bound = 20
+///////////////////////////////////////////////////////////////////////////////
 
 func sort(input []int) {
-	loopcount := len(input)/bound + 1
+	loopcount := len(input)/BOUND + 1
 	max := math.MaxUint32
 	i := 0
 	for ; i < loopcount; i++ {
@@ -67,19 +62,26 @@ func phase(input []int, max int) int {
 		if input[i] < max {
 			heap.Push(h, input[i])
 		}
-		if h.Len() > bound {
+		if h.Len() > BOUND {
 			heap.Pop(h)
 		}
 	}
 
+	// reverse output
+	var line []int
 	if h.Len() > 0 {
+		line = make([]int, 0, h.Len())
 		max = heap.Pop(h).(int)
-		fmt.Printf("%v ", max)
+		line = append(line, max)
 		for h.Len() > 0 {
-			v := heap.Pop(h).(int)
-			fmt.Printf("%v ", v)
+			line = append(line, heap.Pop(h).(int))
 		}
-		fmt.Println()
 	}
+
+	n := len(line) - 1
+	for k := range line {
+		fmt.Printf("%v ", line[n-k])
+	}
+	fmt.Println()
 	return max
 }
