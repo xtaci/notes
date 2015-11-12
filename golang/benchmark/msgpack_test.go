@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/davecgh/go-spew/spew"
-	"github.com/vmihailenco/msgpack"
+	"gopkg.in/vmihailenco/msgpack.v2"
 	"testing"
 	//	. "types"
 )

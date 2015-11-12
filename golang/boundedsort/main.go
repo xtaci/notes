@@ -10,7 +10,7 @@ import (
 const BOUND = 20
 
 func main() {
-	const N = 1000
+	const N = 1234
 	input := make([]int, N)
 	for i := 0; i < N; i++ {
 		input[i] = i
