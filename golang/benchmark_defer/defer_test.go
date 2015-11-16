@@ -5,16 +5,16 @@ import (
 	"testing"
 )
 
-var mu sync.Mutex
+var mu sync.RWMutex
 
 func deferlock() {
-	mu.Lock()
-	defer mu.Unlock()
+	mu.RLock()
+	defer mu.RUnlock()
 }
 
 func nodeferlock() {
-	mu.Lock()
-	mu.Unlock()
+	mu.RLock()
+	mu.RUnlock()
 }
 
 func BenchmarkDeferLock(b *testing.B) {
