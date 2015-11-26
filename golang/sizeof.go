@@ -14,4 +14,5 @@ func main() {
 	fmt.Println(unsafe.Sizeof(y))
 	fmt.Println(unsafe.Sizeof(z))
 	fmt.Println(unsafe.Sizeof(a))
+	fmt.Println(unsafe.Sizeof(struct{}{}))
 }
