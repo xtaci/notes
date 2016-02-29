@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const N = 100000
+const N = 100
 
 func main() {
 	var wg sync.WaitGroup
@@ -28,7 +28,7 @@ func main() {
 func f(ch chan *sync.WaitGroup) {
 	for {
 		wg := <-ch
-		foo()
+		//		foo()
 		wg.Done()
 	}
 }
