@@ -5,6 +5,8 @@ import (
 )
 
 func main() {
-	x := int32(-2)
-	fmt.Printf("%x", uint32(x))
+	later := uint32(0)
+	early := uint32(1)
+	fmt.Println(later - early)
+	fmt.Println(int32(later - early))
 }
