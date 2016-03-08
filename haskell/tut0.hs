@@ -1,17 +1,22 @@
 import Data.List
 import System.IO
-maxInt = maxBound::Int
-minInt = minBound::Int
-bigFloat = 3.99999999999999999
 
-doubleMe x = x + x  
-doubleUs x y = doubleMe x + doubleMe y
+fib 0 = 0
+fib 1 = 1
+fib n = fib (n-1) + fib (n-2)
 
-doubleSmallNumber x = if x > 100  
-                        then x  
-                        else x*2   
+nats = 1 : map (+1) nats
 
-boomBangs xs = [ if x < 10 then "BOOM!" else "BANG!" | x <- xs, odd x]   
+removeNonUppercase :: [Char] -> [Char]  
 removeNonUppercase st = [ c | c <- st, c `elem` ['A'..'Z']]   
 
-evensub xxs= [ [ x | x <- xs, even x ] | xs <- xxs]  
+factorial :: Integer -> Integer  
+factorial n = product [1..n]  
+
+circumference :: Float -> Float  
+circumference r = 2 * pi * r  
+
+
+circumference' :: Double -> Double  
+circumference' r = 2 * pi * r  
+
