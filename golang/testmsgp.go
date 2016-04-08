@@ -5,30 +5,33 @@ import (
 	"log"
 	"time"
 
-	"gopkg.in/vmihailenco/msgpack.v2"
-
 	"github.com/tinylib/msgp/msgp"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type Data struct {
 	Persons []Person
+	M       map[int]int
 }
 
 type Person struct {
-	Name       string `msg:"name"`
-	Address    string `msg:"address"`
-	Age        int    `msg:"age"`
-	Hidden     string `msg:"-"` // this field is ignored
-	unexported bool   // this field is also ignored
+	Name       string
+	Address    string
+	Age        int
+	Hidden     string
+	unexported bool
 }
 
 func main() {
 	const N = 10000000
 	data := new(Data)
 	data.Persons = make([]Person, N)
+	data.M = make(map[int]int)
 	for i := 0; i < N; i++ {
 		data.Persons[i].Name = fmt.Sprint(i)
 		data.Persons[i].Age = i
+		data.M[i] = i
 	}
 	start := time.Now()
 	bts, err := data.MarshalMsg(nil)
@@ -75,39 +78,9 @@ func (z *Data) DecodeMsg(dc *msgp.Reader) (err error) {
 				z.Persons = make([]Person, xsz)
 			}
 			for xvk := range z.Persons {
-				var isz uint32
-				isz, err = dc.ReadMapHeader()
+				err = z.Persons[xvk].DecodeMsg(dc)
 				if err != nil {
 					return
-				}
-				for isz > 0 {
-					isz--
-					field, err = dc.ReadMapKeyPtr()
-					if err != nil {
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "name":
-						z.Persons[xvk].Name, err = dc.ReadString()
-						if err != nil {
-							return
-						}
-					case "address":
-						z.Persons[xvk].Address, err = dc.ReadString()
-						if err != nil {
-							return
-						}
-					case "age":
-						z.Persons[xvk].Age, err = dc.ReadInt()
-						if err != nil {
-							return
-						}
-					default:
-						err = dc.Skip()
-						if err != nil {
-							return
-						}
-					}
 				}
 			}
 		default:
@@ -133,31 +106,7 @@ func (z *Data) EncodeMsg(en *msgp.Writer) (err error) {
 		return
 	}
 	for xvk := range z.Persons {
-		// map header, size 3
-		// write "name"
-		err = en.Append(0x83, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
-		if err != nil {
-			return err
-		}
-		err = en.WriteString(z.Persons[xvk].Name)
-		if err != nil {
-			return
-		}
-		// write "address"
-		err = en.Append(0xa7, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73)
-		if err != nil {
-			return err
-		}
-		err = en.WriteString(z.Persons[xvk].Address)
-		if err != nil {
-			return
-		}
-		// write "age"
-		err = en.Append(0xa3, 0x61, 0x67, 0x65)
-		if err != nil {
-			return err
-		}
-		err = en.WriteInt(z.Persons[xvk].Age)
+		err = z.Persons[xvk].EncodeMsg(en)
 		if err != nil {
 			return
 		}
@@ -173,16 +122,10 @@ func (z *Data) MarshalMsg(b []byte) (o []byte, err error) {
 	o = append(o, 0x81, 0xa7, 0x50, 0x65, 0x72, 0x73, 0x6f, 0x6e, 0x73)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Persons)))
 	for xvk := range z.Persons {
-		// map header, size 3
-		// string "name"
-		o = append(o, 0x83, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
-		o = msgp.AppendString(o, z.Persons[xvk].Name)
-		// string "address"
-		o = append(o, 0xa7, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73)
-		o = msgp.AppendString(o, z.Persons[xvk].Address)
-		// string "age"
-		o = append(o, 0xa3, 0x61, 0x67, 0x65)
-		o = msgp.AppendInt(o, z.Persons[xvk].Age)
+		o, err = z.Persons[xvk].MarshalMsg(o)
+		if err != nil {
+			return
+		}
 	}
 	return
 }
@@ -215,39 +158,9 @@ func (z *Data) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				z.Persons = make([]Person, xsz)
 			}
 			for xvk := range z.Persons {
-				var isz uint32
-				isz, bts, err = msgp.ReadMapHeaderBytes(bts)
+				bts, err = z.Persons[xvk].UnmarshalMsg(bts)
 				if err != nil {
 					return
-				}
-				for isz > 0 {
-					isz--
-					field, bts, err = msgp.ReadMapKeyZC(bts)
-					if err != nil {
-						return
-					}
-					switch msgp.UnsafeString(field) {
-					case "name":
-						z.Persons[xvk].Name, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							return
-						}
-					case "address":
-						z.Persons[xvk].Address, bts, err = msgp.ReadStringBytes(bts)
-						if err != nil {
-							return
-						}
-					case "age":
-						z.Persons[xvk].Age, bts, err = msgp.ReadIntBytes(bts)
-						if err != nil {
-							return
-						}
-					default:
-						bts, err = msgp.Skip(bts)
-						if err != nil {
-							return
-						}
-					}
 				}
 			}
 		default:
@@ -264,7 +177,7 @@ func (z *Data) UnmarshalMsg(bts []byte) (o []byte, err error) {
 func (z *Data) Msgsize() (s int) {
 	s = 1 + 8 + msgp.ArrayHeaderSize
 	for xvk := range z.Persons {
-		s += 1 + 5 + msgp.StringPrefixSize + len(z.Persons[xvk].Name) + 8 + msgp.StringPrefixSize + len(z.Persons[xvk].Address) + 4 + msgp.IntSize
+		s += z.Persons[xvk].Msgsize()
 	}
 	return
 }
@@ -285,18 +198,23 @@ func (z *Person) DecodeMsg(dc *msgp.Reader) (err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
-		case "name":
+		case "Name":
 			z.Name, err = dc.ReadString()
 			if err != nil {
 				return
 			}
-		case "address":
+		case "Address":
 			z.Address, err = dc.ReadString()
 			if err != nil {
 				return
 			}
-		case "age":
+		case "Age":
 			z.Age, err = dc.ReadInt()
+			if err != nil {
+				return
+			}
+		case "Hidden":
+			z.Hidden, err = dc.ReadString()
 			if err != nil {
 				return
 			}
@@ -311,10 +229,10 @@ func (z *Person) DecodeMsg(dc *msgp.Reader) (err error) {
 }
 
 // EncodeMsg implements msgp.Encodable
-func (z Person) EncodeMsg(en *msgp.Writer) (err error) {
-	// map header, size 3
-	// write "name"
-	err = en.Append(0x83, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+func (z *Person) EncodeMsg(en *msgp.Writer) (err error) {
+	// map header, size 4
+	// write "Name"
+	err = en.Append(0x84, 0xa4, 0x4e, 0x61, 0x6d, 0x65)
 	if err != nil {
 		return err
 	}
@@ -322,8 +240,8 @@ func (z Person) EncodeMsg(en *msgp.Writer) (err error) {
 	if err != nil {
 		return
 	}
-	// write "address"
-	err = en.Append(0xa7, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73)
+	// write "Address"
+	err = en.Append(0xa7, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73)
 	if err != nil {
 		return err
 	}
@@ -331,8 +249,8 @@ func (z Person) EncodeMsg(en *msgp.Writer) (err error) {
 	if err != nil {
 		return
 	}
-	// write "age"
-	err = en.Append(0xa3, 0x61, 0x67, 0x65)
+	// write "Age"
+	err = en.Append(0xa3, 0x41, 0x67, 0x65)
 	if err != nil {
 		return err
 	}
@@ -340,22 +258,34 @@ func (z Person) EncodeMsg(en *msgp.Writer) (err error) {
 	if err != nil {
 		return
 	}
+	// write "Hidden"
+	err = en.Append(0xa6, 0x48, 0x69, 0x64, 0x64, 0x65, 0x6e)
+	if err != nil {
+		return err
+	}
+	err = en.WriteString(z.Hidden)
+	if err != nil {
+		return
+	}
 	return
 }
 
 // MarshalMsg implements msgp.Marshaler
-func (z Person) MarshalMsg(b []byte) (o []byte, err error) {
+func (z *Person) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 3
-	// string "name"
-	o = append(o, 0x83, 0xa4, 0x6e, 0x61, 0x6d, 0x65)
+	// map header, size 4
+	// string "Name"
+	o = append(o, 0x84, 0xa4, 0x4e, 0x61, 0x6d, 0x65)
 	o = msgp.AppendString(o, z.Name)
-	// string "address"
-	o = append(o, 0xa7, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73)
+	// string "Address"
+	o = append(o, 0xa7, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73)
 	o = msgp.AppendString(o, z.Address)
-	// string "age"
-	o = append(o, 0xa3, 0x61, 0x67, 0x65)
+	// string "Age"
+	o = append(o, 0xa3, 0x41, 0x67, 0x65)
 	o = msgp.AppendInt(o, z.Age)
+	// string "Hidden"
+	o = append(o, 0xa6, 0x48, 0x69, 0x64, 0x64, 0x65, 0x6e)
+	o = msgp.AppendString(o, z.Hidden)
 	return
 }
 
@@ -375,18 +305,23 @@ func (z *Person) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
-		case "name":
+		case "Name":
 			z.Name, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
 				return
 			}
-		case "address":
+		case "Address":
 			z.Address, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
 				return
 			}
-		case "age":
+		case "Age":
 			z.Age, bts, err = msgp.ReadIntBytes(bts)
+			if err != nil {
+				return
+			}
+		case "Hidden":
+			z.Hidden, bts, err = msgp.ReadStringBytes(bts)
 			if err != nil {
 				return
 			}
@@ -401,7 +336,7 @@ func (z *Person) UnmarshalMsg(bts []byte) (o []byte, err error) {
 	return
 }
 
-func (z Person) Msgsize() (s int) {
-	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 8 + msgp.StringPrefixSize + len(z.Address) + 4 + msgp.IntSize
+func (z *Person) Msgsize() (s int) {
+	s = 1 + 5 + msgp.StringPrefixSize + len(z.Name) + 8 + msgp.StringPrefixSize + len(z.Address) + 4 + msgp.IntSize + 7 + msgp.StringPrefixSize + len(z.Hidden)
 	return
 }
