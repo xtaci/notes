@@ -5,8 +5,9 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"github.com/vmihailenco/msgpack"
 	"time"
+
+	"github.com/vmihailenco/msgpack"
 )
 
 func main() {
