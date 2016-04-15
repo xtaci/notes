@@ -15,10 +15,11 @@ func encrypt(block cipher.Block, data []byte) {
 	block.Encrypt(tbl[:], tbl[:])
 	n := len(data) / aes.BlockSize
 	for i := 0; i < n; i++ {
+		base := i * aes.BlockSize
 		for j := 0; j < aes.BlockSize; j++ {
-			data[i*aes.BlockSize+j] = data[i*aes.BlockSize+j] ^ tbl[j]
+			data[base+j] = data[base+j] ^ tbl[j]
 		}
-		copy(tbl[:], data[i*aes.BlockSize:])
+		copy(tbl[:], data[base:])
 		block.Encrypt(tbl[:], tbl[:])
 	}
 
@@ -32,12 +33,14 @@ func decrypt(block cipher.Block, data []byte) {
 	block.Encrypt(tbl[:], tbl[:])
 	n := len(data) / aes.BlockSize
 	for i := 0; i < n; i++ {
+		base := i * aes.BlockSize
 		var next [aes.BlockSize]byte
-		copy(next[:], data[i*aes.BlockSize:])
-		for j := 0; j < aes.BlockSize; j++ {
-			data[i*aes.BlockSize+j] = data[i*aes.BlockSize+j] ^ tbl[j]
-		}
+		copy(next[:], data[base:])
 		block.Encrypt(next[:], next[:])
+
+		for j := 0; j < aes.BlockSize; j++ {
+			data[base+j] = data[base+j] ^ tbl[j]
+		}
 		copy(tbl[:], next[:])
 	}
 
