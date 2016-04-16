@@ -3,7 +3,9 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/binary"
 	"fmt"
+	"time"
 )
 
 var IV = []byte{167, 115, 79, 156, 18, 172, 27, 1, 164, 21, 242, 193, 252, 120, 230, 107}
@@ -53,10 +55,14 @@ func main() {
 	plaintext := []byte("By definition of self-synchronising cipher, if part of the ciphertext is lost (e.g. due to transmission errors), then receiver will lose only some part of the original message (garbled content), and should be able to continue correct decryption after processing some amount of input data. This simplest way of using CFB described above is not any more self-synchronizing than other cipher modes like CBC. Only if a whole blocksize of ciphertext is lost both CBC and CFB will synchronize")
 	pass := make([]byte, aes.BlockSize)
 	copy(pass, []byte(key))
+	rnd := make([]byte, 16)
+	binary.LittleEndian.PutUint64(rnd, uint64(time.Now().UnixNano()))
+	binary.LittleEndian.PutUint64(rnd, uint64(time.Now().Unix()))
 	if block, err := aes.NewCipher(pass); err == nil {
+		plaintext = append(rnd, plaintext...)
 		encrypt(block, plaintext)
 		fmt.Println(string(plaintext))
 		decrypt(block, plaintext)
-		fmt.Println(string(plaintext))
+		fmt.Println(string(plaintext[16:]))
 	}
 }
