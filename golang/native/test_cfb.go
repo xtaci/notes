@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"encoding/binary"
 	"fmt"
+	"math/rand"
 	"time"
 )
 
@@ -57,9 +58,10 @@ func main() {
 	copy(pass, []byte(key))
 	rnd := make([]byte, 16)
 	binary.LittleEndian.PutUint64(rnd, uint64(time.Now().UnixNano()))
-	binary.LittleEndian.PutUint64(rnd, uint64(time.Now().Unix()))
+	binary.LittleEndian.PutUint64(rnd[8:], uint64(rand.Int63()))
 	if block, err := aes.NewCipher(pass); err == nil {
 		plaintext = append(rnd, plaintext...)
+		fmt.Println(rnd)
 		encrypt(block, plaintext)
 		fmt.Println(string(plaintext))
 		decrypt(block, plaintext)
