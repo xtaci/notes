@@ -12,7 +12,7 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("%#v\n", priv)
-	msg := []byte("hello")
+	msg := []byte("C")
 	out, err := rsa.EncryptPKCS1v15(rand.Reader, &priv.PublicKey, msg)
 	if err != nil {
 		panic(err)
