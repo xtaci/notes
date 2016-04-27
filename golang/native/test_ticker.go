@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 3000; i++ {
 		f()
 		<-time.After(10 * time.Millisecond)
 	}
@@ -15,6 +15,6 @@ func main() {
 }
 
 func f() {
-	ticker := time.NewTicker(10 * time.Millisecond)
+	ticker := time.NewTicker(40 * time.Millisecond)
 	log.Println(ticker)
 }
