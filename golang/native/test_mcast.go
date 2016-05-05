@@ -34,14 +34,16 @@ func ping(a string) {
 	n := 0
 	for {
 		c.Write([]byte(fmt.Sprintf("hello, world%v\n", n)))
-		time.Sleep(1 * time.Second)
+		time.Sleep(10 * time.Millisecond)
 		n++
 	}
 }
 
 func msgHandler(src *net.UDPAddr, n int, b []byte) {
-	atomic.AddUint64(&count, 1)
-	println(count)
+	cnt := atomic.AddUint64(&count, 1)
+	if cnt%5000 == 0 {
+		println(count)
+	}
 }
 
 func serveMulticastUDP(a string, h func(*net.UDPAddr, int, []byte)) {
