@@ -1,6 +1,6 @@
 #include <iostream>
 
-const int
+inline const int
 get_size() {
 	return 10;
 }
