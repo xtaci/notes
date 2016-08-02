@@ -1,6 +1,6 @@
 #include <iostream>
 
-int
+const int
 get_size() {
 	return 10;
 }
