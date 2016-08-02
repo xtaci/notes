@@ -1,15 +1,21 @@
 #include <iostream>
 
-const int
+int
 get_size() {
 	return 10;
 }
 
 int
 main(void) {
-	char d[get_size()];
-	const int cnt = 42;
-	std::string x[cnt];
-	std::string y[get_size()];
-}
+	unsigned sz=42 ;
+	constexpr unsigned sz1 = 42;
+	const unsigned sz2 = 42;
+	char a[sz];
+	char b[sz1];
+	char c[sz2];
 
+	std::string str1[sz];
+	std::string str2[sz1];
+	std::string str3[sz2];
+	std::string str4[get_size()];
+}

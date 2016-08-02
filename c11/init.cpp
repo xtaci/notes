@@ -1,17 +1,32 @@
 #include <iostream>
 
-struct T {
+class T {
+	public:
 	int A;
+	int B;
+	T();
 };
+
+T::T() {
+}
 
 int 
 main() {
+	using namespace std;
 	T *x = new(T);
+	T t;
 	int a;
-	std::cout << x->A << std::endl;
-	std::cout << a << std::endl;
+	cout << x->A << " " << x->B  << endl;
+	cout << t.A << " " << t.B  << endl;
+	cout << a << endl;
 	int a3[5] = {0,1,2}; 
+	int b3[5];
 	for (auto &v :a3) {
-		std::cout << v <<std::endl;
+		cout << v << " ";
 	}
+	cout << endl;	
+	for (auto &v :b3) {
+		cout << v << " " ;
+	}
+	cout << endl;	
 }
