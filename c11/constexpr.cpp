@@ -13,6 +13,7 @@ main(void) {
 	char a[sz];
 	char b[sz1];
 	char c[sz2];
+	char d[get_size()];
 
 	std::string str1[sz];
 	std::string str2[sz1];
