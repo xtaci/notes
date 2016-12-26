@@ -24,11 +24,12 @@ func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
+	msg := &ProducerMessage{Topic: "test", Key: StringEncoder("userid-1"), Value: StringEncoder("testing 123")}
 	var enqueued, errors int
 ProducerLoop:
 	for {
 		select {
-		case producer.Input() <- &ProducerMessage{Topic: "test", Key: StringEncoder("userid-1"), Value: StringEncoder("testing 123")}:
+		case producer.Input() <- msg:
 			enqueued++
 		case err := <-producer.Errors():
 			log.Println("Failed to produce message", err)

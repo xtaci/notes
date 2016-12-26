@@ -17,11 +17,13 @@ func main() {
 		}
 	}()
 
-	msg := &ProducerMessage{Topic: "test", Key: StringEncoder("userid-1"), Value: StringEncoder("testing 123")}
-	partition, offset, err := producer.SendMessage(msg)
-	if err != nil {
-		log.Printf("FAILED to send message: %s\n", err)
-	} else {
-		log.Printf("> message sent to partition %d at offset %d\n", partition, offset)
+	for i := 0; i < 1024*1024; i++ {
+		msg := &ProducerMessage{Topic: "test", Key: StringEncoder("userid-1"), Value: StringEncoder("testing 123")}
+		_, _, err := producer.SendMessage(msg)
+		if err != nil {
+			log.Printf("FAILED to send message: %s\n", err)
+		} else {
+			//		log.Printf("> message sent to partition %d at offset %d\n", partition, offset)
+		}
 	}
 }
