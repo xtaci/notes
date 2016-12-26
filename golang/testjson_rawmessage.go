@@ -12,7 +12,7 @@ type Container struct {
 
 func main() {
 	var c Container
-	c.F = json.RawMessage(`{"a":1, "b":2, "c":"hello world"}`)
+	c.F = []byte(`{"a":1, "b":2, "c":"hello world"}`)
 
 	bts, _ := json.Marshal(c)
 	log.Println(string(bts))
