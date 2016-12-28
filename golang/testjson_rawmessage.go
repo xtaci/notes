@@ -12,7 +12,8 @@ type Container struct {
 
 func main() {
 	var c Container
-	c.F = []byte(`{"a":1, "b":2, "c":"hello world"}`)
+	rawj := `{"a":1, "b":2, "c":"hello world"}`
+	c.F = []byte(rawj)
 
 	bts, _ := json.Marshal(c)
 	log.Println(string(bts))
@@ -20,4 +21,10 @@ func main() {
 	err := json.Unmarshal(bts, &c2)
 	log.Println(c2, err)
 	log.Println(string(c2.F))
+
+	m := make(map[string]json.RawMessage)
+	m["rawj"] = []byte(rawj)
+
+	mbts, _ := json.Marshal(m)
+	log.Println(string(mbts))
 }
