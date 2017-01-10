@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 )
 
@@ -22,9 +23,15 @@ func main() {
 	log.Println(c2, err)
 	log.Println(string(c2.F))
 
-	m := make(map[string]json.RawMessage)
-	m["rawj"] = []byte(rawj)
+	m := make(map[string]*json.RawMessage)
+	hb, _ := json.Marshal("heart_beat_req")
+	ptr := (*json.RawMessage)(&hb)
+	var zero []byte
+	ptr2 := (*json.RawMessage)(&zero)
+	m["hb"] = ptr
+	m["ptr2"] = ptr2
 
+	fmt.Printf("%s %s\n", m, hb)
 	mbts, _ := json.Marshal(m)
 	log.Println(string(mbts))
 }
