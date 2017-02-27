@@ -10,10 +10,10 @@ func main() {
 }
 
 func f() {
-	tc := time.After(33 * time.Millisecond)
+	tc := time.After(10 * time.Millisecond)
 
 	for {
 		<-tc
-		tc = time.After(33 * time.Millisecond)
+		tc = time.After(10 * time.Millisecond)
 	}
 }
