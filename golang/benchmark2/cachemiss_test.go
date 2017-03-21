@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func BenchmarkSlice(b *testing.B) {
+func BenchmarkLoopSlice(b *testing.B) {
 	s := make([]byte, b.N)
 	z := byte(0)
 	b.ResetTimer()
@@ -14,7 +14,7 @@ func BenchmarkSlice(b *testing.B) {
 	}
 }
 
-func BenchmarkList(b *testing.B) {
+func BenchmarkLoopList(b *testing.B) {
 	l := list.New()
 	for i := 0; i < b.N; i++ {
 		l.PushBack(byte(i))
