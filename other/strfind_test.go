@@ -6,6 +6,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"testing"
+	"time"
 )
 
 func init() {
@@ -15,6 +16,7 @@ func init() {
 type dummyReader struct {
 	count int
 	max   int
+	rnd   *rand.Rand
 }
 
 func (dr *dummyReader) Read(p []byte) (n int, err error) {
@@ -26,7 +28,7 @@ func (dr *dummyReader) Read(p []byte) (n int, err error) {
 	remain := len(p)
 	idx := 0
 	for remain > 0 {
-		p[idx] = alpha[rand.Intn(len(alpha))]
+		p[idx] = alpha[dr.rnd.Intn(len(alpha))]
 		idx++
 		remain--
 		dr.count++
@@ -41,6 +43,7 @@ func (dr *dummyReader) Read(p []byte) (n int, err error) {
 func newDummyReader(cap int) *dummyReader {
 	dr := new(dummyReader)
 	dr.max = cap
+	dr.rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 	return dr
 }
 
