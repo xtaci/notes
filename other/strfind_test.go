@@ -13,7 +13,6 @@ func init() {
 }
 
 type dummyReader struct {
-	ch    chan byte
 	count int
 	max   int
 }
