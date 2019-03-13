@@ -47,6 +47,7 @@ func (h *wordsHeap) Serialize(w io.Writer) {
 	}
 	bufw.Flush()
 }
+
 func (h *wordsHeap) MemSize() int64 { return h.memsize }
 
 func (h *wordsHeap) Add(line string, ord int64) {
@@ -66,6 +67,19 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 	h.init(memLimit)
 	var ord int64
 	parts := 0
+
+	// file based serialization
+	fileDump := func(hp *wordsHeap, path string) {
+		f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		if err != nil {
+			log.Fatal(err)
+		}
+		hp.Serialize(f)
+		if err := f.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	for {
 		line, err := reader.ReadString(' ')
 		line = strings.TrimSpace(line)
@@ -75,14 +89,7 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 			ord++
 
 			if h.MemSize() >= h.Limit() {
-				f, err := os.OpenFile(fmt.Sprintf("part%v.dat", parts), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-				if err != nil {
-					log.Fatal(err)
-				}
-				h.Serialize(f)
-				if err := f.Close(); err != nil {
-					log.Fatal(err)
-				}
+				fileDump(h, fmt.Sprintf("part%v.dat", parts))
 				log.Println("chunk#", parts, "written")
 				parts++
 				h = new(wordsHeap)
@@ -95,14 +102,7 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 		}
 	}
 
-	f, err := os.OpenFile(fmt.Sprintf("part%v.dat", parts), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	h.Serialize(f)
-	if err := f.Close(); err != nil {
-		log.Fatal(err)
-	}
+	fileDump(h, fmt.Sprintf("part%v.dat", parts))
 	log.Println("chunk#", parts, "written")
 	parts++
 	return parts
