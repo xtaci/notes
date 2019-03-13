@@ -51,7 +51,7 @@ func (h *wordsHeap) MemSize() int64 { return h.memsize }
 
 func (h *wordsHeap) Add(line string, ord int64) {
 	heap.Push(h, entry{line, ord})
-	h.memsize = h.memsize + int64(len(line)) + 8 + 24 // estimated memory consumption
+	h.memsize = h.memsize + int64(len(line)) + 8 // estimated memory consumption
 }
 
 func (h *wordsHeap) init(limit int64) { h.limit = limit }
