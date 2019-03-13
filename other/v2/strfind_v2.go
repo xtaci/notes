@@ -218,11 +218,9 @@ func findUnique(r io.Reader, memLimit int64) {
 				target_str = last_str
 				target_ord = last_ord
 				hasSet = true
-			} else {
-				if last_ord < target_ord {
-					target_str = last_str
-					target_ord = last_ord
-				}
+			} else if last_ord < target_ord {
+				target_str = last_str
+				target_ord = last_ord
 			}
 		}
 	}
