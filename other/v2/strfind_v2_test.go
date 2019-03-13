@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"math/rand"
 	"net/http"
@@ -45,6 +46,15 @@ func newDummyReader(cap int) *dummyReader {
 	dr.max = cap
 	dr.rnd = rand.New(rand.NewSource(time.Now().UnixNano()))
 	return dr
+}
+
+func TestFindUniqueString(t *testing.T) {
+	t1 := bytes.NewBufferString("a a b b b c")
+	findUnique(t1, 10*1024*1024)
+	t2 := bytes.NewBufferString("a a a a a a")
+	findUnique(t2, 10*1024*1024)
+	t3 := bytes.NewBufferString("a b c d e a")
+	findUnique(t3, 10*1024*1024)
 }
 
 func TestFindUnique100M(t *testing.T) {

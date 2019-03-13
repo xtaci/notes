@@ -67,28 +67,29 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 	var ord int64
 	parts := 0
 	for {
-		if line, err := reader.ReadString(' '); err == nil {
-			line = strings.TrimSpace(line)
-			if line == "" {
-				continue
+		line, err := reader.ReadString(' ')
+		line = strings.TrimSpace(line)
+		if line == "" && err == nil {
+			continue
+		}
+		h.Add(string(line), ord)
+		if h.MemSize() >= h.Limit() {
+			f, err := os.OpenFile(fmt.Sprintf("part%v.dat", parts), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+			if err != nil {
+				log.Fatal(err)
 			}
-			h.Add(string(line), ord)
-			if h.MemSize() >= h.Limit() {
-				f, err := os.OpenFile(fmt.Sprintf("part%v.dat", parts), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-				if err != nil {
-					log.Fatal(err)
-				}
-				h.Serialize(f)
-				if err := f.Close(); err != nil {
-					log.Fatal(err)
-				}
-				log.Println("chunk#", parts, "written")
-				parts++
-				h = new(wordsHeap)
-				h.init(memLimit)
+			h.Serialize(f)
+			if err := f.Close(); err != nil {
+				log.Fatal(err)
 			}
-			ord++
-		} else {
+			log.Println("chunk#", parts, "written")
+			parts++
+			h = new(wordsHeap)
+			h.init(memLimit)
+		}
+		ord++
+
+		if err != nil {
 			break
 		}
 	}
@@ -210,24 +211,28 @@ func findUnique(r io.Reader, memLimit int64) {
 	last_ord := sr.ord
 	last_cnt := 1
 
+	compareTarget := func() {
+		if last_cnt == 1 {
+			// found new unique string, compare with the ordinal
+			if !hasSet {
+				target_str = last_str
+				target_ord, _ = strconv.ParseInt(last_ord, 10, 64)
+				hasSet = true
+			} else {
+				new_ord, _ := strconv.ParseInt(last_ord, 10, 64)
+				if new_ord < target_ord {
+					target_str = last_str
+					target_ord = new_ord
+				}
+			}
+		}
+	}
+
 	for sr.next() == nil {
 		if last_str == sr.str {
 			last_cnt++
 		} else {
-			if last_cnt == 1 {
-				// found new unique string, compare with the ordinal
-				if !hasSet {
-					target_str = last_str
-					target_ord, _ = strconv.ParseInt(last_ord, 10, 64)
-					hasSet = true
-				} else {
-					new_ord, _ := strconv.ParseInt(last_ord, 10, 64)
-					if new_ord < target_ord {
-						target_str = last_str
-						target_ord = new_ord
-					}
-				}
-			}
+			compareTarget()
 
 			// record current
 			last_str = sr.str
@@ -235,6 +240,9 @@ func findUnique(r io.Reader, memLimit int64) {
 			last_cnt = 1
 		}
 	}
+
+	// make sure the final words is considered
+	compareTarget()
 
 	if hasSet {
 		fmt.Println("Found the first unique string:", target_str, "appears at:", target_ord)
