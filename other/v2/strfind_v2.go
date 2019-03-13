@@ -69,25 +69,26 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 	for {
 		line, err := reader.ReadString(' ')
 		line = strings.TrimSpace(line)
-		if line == "" && err == nil {
-			continue
-		}
-		h.Add(string(line), ord)
-		if h.MemSize() >= h.Limit() {
-			f, err := os.OpenFile(fmt.Sprintf("part%v.dat", parts), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-			if err != nil {
-				log.Fatal(err)
+
+		if line != "" {
+			h.Add(string(line), ord)
+			ord++
+
+			if h.MemSize() >= h.Limit() {
+				f, err := os.OpenFile(fmt.Sprintf("part%v.dat", parts), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+				if err != nil {
+					log.Fatal(err)
+				}
+				h.Serialize(f)
+				if err := f.Close(); err != nil {
+					log.Fatal(err)
+				}
+				log.Println("chunk#", parts, "written")
+				parts++
+				h = new(wordsHeap)
+				h.init(memLimit)
 			}
-			h.Serialize(f)
-			if err := f.Close(); err != nil {
-				log.Fatal(err)
-			}
-			log.Println("chunk#", parts, "written")
-			parts++
-			h = new(wordsHeap)
-			h.init(memLimit)
 		}
-		ord++
 
 		if err != nil {
 			break
