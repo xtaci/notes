@@ -49,6 +49,8 @@ func newDummyReader(cap int) *dummyReader {
 }
 
 func TestFindUniqueString(t *testing.T) {
+	t0 := bytes.NewBufferString("   ")
+	findUnique(t0, 10)
 	t1 := bytes.NewBufferString("a a b b b c")
 	findUnique(t1, 10)
 	t2 := bytes.NewBufferString("a a a a a a")

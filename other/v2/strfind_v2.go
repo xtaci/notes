@@ -188,6 +188,7 @@ func findUnique(r io.Reader, memLimit int64) {
 	log.Println("generated", parts, "parts")
 	// step2. sequential output of all parts
 	ch := merger(parts)
+	log.Println("beginning merged sequential output")
 
 	// step3. loop through the sorted string chan
 	// and find the unique string with lowest ord
@@ -195,10 +196,17 @@ func findUnique(r io.Reader, memLimit int64) {
 	var target_ord int64
 	var hasSet bool
 
-	e := <-ch
-	last_str := e.str
-	last_ord := e.ord
-	last_cnt := 1
+	var last_str string
+	var last_ord int64
+	var last_cnt int
+	if e, ok := <-ch; ok {
+		last_str = e.str
+		last_ord = e.ord
+		last_cnt = 1
+	} else {
+		log.Println("empty set")
+		return
+	}
 
 	compareTarget := func() {
 		if last_cnt == 1 {
@@ -230,8 +238,8 @@ func findUnique(r io.Reader, memLimit int64) {
 	compareTarget()
 
 	if hasSet {
-		fmt.Println("Found the first unique string:", target_str, "appears at:", target_ord)
+		log.Println("Found the first unique string:", target_str, "appears at:", target_ord)
 	} else {
-		fmt.Println("Unique string not found!")
+		log.Println("Unique string not found!")
 	}
 }
