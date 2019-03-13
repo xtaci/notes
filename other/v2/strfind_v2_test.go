@@ -49,19 +49,19 @@ func newDummyReader(cap int) *dummyReader {
 
 func TestFindUnique100M(t *testing.T) {
 	dr := newDummyReader(100 * 1024 * 1024)
-	findUnique(dr, 128*1024*1024)
+	findUnique(dr, 10*1024*1024)
 }
 func TestFindUnique1G(t *testing.T) {
 	dr := newDummyReader(1024 * 1024 * 1024)
-	findUnique(dr, 128*1024*1024)
+	findUnique(dr, 100*1024*1024)
 }
 
 func TestFindUnique10G(t *testing.T) {
 	dr := newDummyReader(10 * 1024 * 1024 * 1024)
-	findUnique(dr, 128*1024*1024)
+	findUnique(dr, 1024*1024*1024)
 }
 
 func TestFindUnique100G(t *testing.T) {
 	dr := newDummyReader(100 * 1024 * 1024 * 1024)
-	findUnique(dr, 128*1024*1024)
+	findUnique(dr, 10*1024*1024*1024)
 }
