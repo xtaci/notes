@@ -155,36 +155,40 @@ func (h *pickHeap) Pop() interface{} {
 	return x
 }
 
-// merger combines all small parts into large sorted file
-func merger(parts int, w io.Writer) {
-	files := make([]*os.File, parts)
-	h := new(pickHeap)
-	for i := 0; i < parts; i++ {
-		f, err := os.Open(fmt.Sprintf("part%v.dat", i))
-		if err != nil {
-			log.Fatal(err)
-		}
-		files[i] = f
-		sr := newStreamReader(f)
-		sr.next() // fetch first string,ord
-		heap.Push(h, sr)
-	}
-
-	bufw := bufio.NewWriter(w)
-	for h.Len() > 0 {
-		sr := heap.Pop(h).(*streamReader)
-		fmt.Fprintf(bufw, "%v,%v\n", sr.str, sr.ord)
-		if sr.next() == nil {
+func merger(parts int) chan entry {
+	ch := make(chan entry, 4096)
+	go func() {
+		files := make([]*os.File, parts)
+		h := new(pickHeap)
+		for i := 0; i < parts; i++ {
+			f, err := os.Open(fmt.Sprintf("part%v.dat", i))
+			if err != nil {
+				log.Fatal(err)
+			}
+			files[i] = f
+			sr := newStreamReader(f)
+			sr.next() // fetch first string,ord
 			heap.Push(h, sr)
 		}
-	}
-	bufw.Flush()
 
-	for _, f := range files[:] {
-		if err := f.Close(); err != nil {
-			log.Fatal(err)
+		for h.Len() > 0 {
+			sr := heap.Pop(h).(*streamReader)
+			ord, _ := strconv.ParseInt(sr.ord, 10, 64)
+			ch <- entry{sr.str, ord}
+			if sr.next() == nil {
+				heap.Push(h, sr)
+			}
 		}
-	}
+		close(ch)
+
+		for _, f := range files[:] {
+			if err := f.Close(); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
+
+	return ch
 }
 
 // findUnique reads from r with a specified bufsize
@@ -193,25 +197,18 @@ func findUnique(r io.Reader, memLimit int64) {
 	// step.1 sort into file chunks
 	parts := sort2Disk(r, memLimit)
 	log.Println("generated", parts, "parts")
-	f, err := os.OpenFile("big.dat", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// step2. merge all these parts into a sorted large file
-	merger(parts, f)
-	// step3. loop through the file and find the unique string with lowest ord
-	if _, err := f.Seek(0, 0); err != nil {
-		log.Fatal(err)
-	}
+	// step2. sequential output of all parts
+	ch := merger(parts)
 
+	// step3. loop through the sorted string chan
+	// and find the unique string with lowest ord
 	var target_str string
 	var target_ord int64
 	var hasSet bool
 
-	sr := newStreamReader(f)
-	sr.next()
-	last_str := sr.str
-	last_ord := sr.ord
+	e := <-ch
+	last_str := e.str
+	last_ord := e.ord
 	last_cnt := 1
 
 	compareTarget := func() {
@@ -219,27 +216,25 @@ func findUnique(r io.Reader, memLimit int64) {
 			// found new unique string, compare with the ordinal
 			if !hasSet {
 				target_str = last_str
-				target_ord, _ = strconv.ParseInt(last_ord, 10, 64)
+				target_ord = last_ord
 				hasSet = true
 			} else {
-				new_ord, _ := strconv.ParseInt(last_ord, 10, 64)
-				if new_ord < target_ord {
+				if last_ord < target_ord {
 					target_str = last_str
-					target_ord = new_ord
+					target_ord = last_ord
 				}
 			}
 		}
 	}
 
-	for sr.next() == nil {
-		if last_str == sr.str {
+	// read through the sorted string chan
+	for e := range ch {
+		if last_str == e.str {
 			last_cnt++
 		} else {
 			compareTarget()
-
-			// record current
-			last_str = sr.str
-			last_ord = sr.ord
+			last_str = e.str
+			last_ord = e.ord
 			last_cnt = 1
 		}
 	}
@@ -251,10 +246,5 @@ func findUnique(r io.Reader, memLimit int64) {
 		fmt.Println("Found the first unique string:", target_str, "appears at:", target_ord)
 	} else {
 		fmt.Println("Unique string not found!")
-	}
-
-	// cleanup
-	if err := f.Close(); err != nil {
-		log.Fatal(err)
 	}
 }
