@@ -23,15 +23,10 @@ type wordsHeap struct {
 	memsize int64
 }
 
-func (h *wordsHeap) Len() int { return len(h.entries) }
-func (h *wordsHeap) Less(i, j int) bool {
-	return strings.Compare(h.entries[i].str, h.entries[j].str) == -1
-}
-
-func (h *wordsHeap) Swap(i, j int) { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
-
+func (h *wordsHeap) Len() int           { return len(h.entries) }
+func (h *wordsHeap) Less(i, j int) bool { return h.entries[i].str < h.entries[j].str }
+func (h *wordsHeap) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
 func (h *wordsHeap) Push(x interface{}) { h.entries = append(h.entries, x.(entry)) }
-
 func (h *wordsHeap) Pop() interface{} {
 	n := len(h.entries)
 	x := h.entries[n-1]
@@ -139,15 +134,10 @@ type pickHeap struct {
 	entries []*streamReader
 }
 
-func (h *pickHeap) Len() int { return len(h.entries) }
-func (h *pickHeap) Less(i, j int) bool {
-	return strings.Compare(h.entries[i].str, h.entries[j].str) == -1
-}
-
-func (h *pickHeap) Swap(i, j int) { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
-
+func (h *pickHeap) Len() int           { return len(h.entries) }
+func (h *pickHeap) Less(i, j int) bool { return h.entries[i].str < h.entries[j].str }
+func (h *pickHeap) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
 func (h *pickHeap) Push(x interface{}) { h.entries = append(h.entries, x.(*streamReader)) }
-
 func (h *pickHeap) Pop() interface{} {
 	n := len(h.entries)
 	x := h.entries[n-1]
