@@ -21,7 +21,7 @@ type dummyReader struct {
 }
 
 func (dr *dummyReader) Read(p []byte) (n int, err error) {
-	var alpha = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZ ")
+	var alpha = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZ             ")
 	if dr.count == dr.max {
 		return 0, io.EOF
 	}
