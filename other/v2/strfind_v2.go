@@ -102,9 +102,11 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 		}
 	}
 
-	fileDump(h, fmt.Sprintf("part%v.dat", parts))
-	log.Println("chunk#", parts, "written")
-	parts++
+	if h.Len() > 0 {
+		fileDump(h, fmt.Sprintf("part%v.dat", parts))
+		log.Println("chunk#", parts, "written")
+		parts++
+	}
 	return parts
 }
 

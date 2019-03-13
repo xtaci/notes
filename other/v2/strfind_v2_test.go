@@ -50,11 +50,13 @@ func newDummyReader(cap int) *dummyReader {
 
 func TestFindUniqueString(t *testing.T) {
 	t1 := bytes.NewBufferString("a a b b b c")
-	findUnique(t1, 10*1024*1024)
+	findUnique(t1, 10)
 	t2 := bytes.NewBufferString("a a a a a a")
-	findUnique(t2, 10*1024*1024)
+	findUnique(t2, 10)
 	t3 := bytes.NewBufferString("a b c d e a")
-	findUnique(t3, 10*1024*1024)
+	findUnique(t3, 10)
+	t4 := bytes.NewBufferString("a a a a a b")
+	findUnique(t4, 10)
 }
 
 func TestFindUnique100M(t *testing.T) {
