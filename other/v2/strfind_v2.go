@@ -80,16 +80,15 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 		line = strings.TrimSpace(line)
 
 		if line != "" {
-			h.Add(string(line), ord)
-			ord++
-
-			if h.MemSize() >= h.Limit() {
+			if h.MemSize()+int64(len(line)) > h.Limit() {
 				fileDump(h, fmt.Sprintf("part%v.dat", parts))
 				log.Println("chunk#", parts, "written")
 				parts++
 				h = new(wordsHeap)
 				h.init(memLimit)
 			}
+			h.Add(string(line), ord)
+			ord++
 		}
 
 		if err != nil {
