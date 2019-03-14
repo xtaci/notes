@@ -19,7 +19,6 @@ type entry struct {
 
 type wordsHeap struct {
 	entries []entry
-	limit   int64
 	memsize int64
 }
 
@@ -41,6 +40,7 @@ func (h *wordsHeap) Serialize(w io.Writer) {
 		fmt.Fprintf(bufw, "%v,%v\n", e.str, e.ord)
 	}
 	bufw.Flush()
+	h.memsize = 0
 }
 
 func (h *wordsHeap) MemSize() int64 { return h.memsize }
@@ -50,16 +50,12 @@ func (h *wordsHeap) Add(line string, ord int64) {
 	h.memsize = h.memsize + int64(len(line)) + 8 // estimated memory consumption
 }
 
-func (h *wordsHeap) init(limit int64) { h.limit = limit }
-func (h *wordsHeap) Limit() int64     { return h.limit }
-
 // sort2Disk writes strings with it's ordinal
 // xxxxx,1234
 // aaaa,5678
 func sort2Disk(r io.Reader, memLimit int64) int {
 	reader := bufio.NewReader(r)
 	h := new(wordsHeap)
-	h.init(memLimit)
 	var ord int64
 	parts := 0
 
@@ -80,12 +76,10 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 		line = strings.TrimSpace(line)
 
 		if line != "" {
-			if h.MemSize()+int64(len(line)) > h.Limit() {
+			if h.MemSize()+int64(len(line)) > memLimit {
 				fileDump(h, fmt.Sprintf("part%v.dat", parts))
 				log.Println("chunk#", parts, "written")
 				parts++
-				h = new(wordsHeap)
-				h.init(memLimit)
 			}
 			h.Add(string(line), ord)
 			ord++
