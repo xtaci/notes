@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// a heap sorter for stream data
+// a sorter for stream data
 type entry struct {
 	str []byte
 	ord int64
@@ -57,10 +57,10 @@ func (h *sortWords) Serialize(w io.Writer) {
 	}
 }
 
-func (h *sortWords) Add(line string, ord int64) bool {
+func (h *sortWords) Add(line []byte, ord int64) bool {
 	sz := len(line)
 	if h.offset+sz < cap(h.pool) { // limit memory
-		copy(h.pool[h.offset:], []byte(line))
+		copy(h.pool[h.offset:], line)
 		h.entries = append(h.entries, entry{h.pool[h.offset : h.offset+sz], ord, 1})
 		h.offset += sz
 		return true
@@ -94,23 +94,20 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 		}
 	}
 
-	for {
-		line, err := reader.ReadString(' ')
-		line = strings.TrimSpace(line)
-
-		if line != "" {
-			if !h.Add(line, ord) {
-				fileDump(h, fmt.Sprintf("part%v.dat", parts))
-				log.Println("chunk#", parts, "written")
-				parts++
-				h.Add(line, ord)
-			}
-			ord++
+	scanner := bufio.NewScanner(reader)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		if !h.Add(scanner.Bytes(), ord) {
+			fileDump(h, fmt.Sprintf("part%v.dat", parts))
+			log.Println("chunk#", parts, "written")
+			parts++
+			h.Add(scanner.Bytes(), ord)
 		}
+		ord++
 
-		if err != nil {
-			break
-		}
+	}
+	if err := scanner.Err(); err != nil {
+		log.Fatal("error reading from source")
 	}
 
 	if h.Len() > 0 {
