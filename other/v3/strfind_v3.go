@@ -54,16 +54,17 @@ func (h *wordsHeap) Serialize(w io.Writer) {
 	h.memsize = 0
 }
 
-func (h *wordsHeap) MemSize() int64 { return h.memsize }
-
-func (h *wordsHeap) Add(line string, ord int64) {
+func (h *wordsHeap) Add(line string, ord int64, memlimit int64) bool {
 	if idx, ok := h.indices[line]; ok {
 		h.entries[idx].cnt++
-	} else {
+		return true
+	} else if h.memsize+int64(len(line))+8+8+int64(len(line))+8 < memlimit { // limit memory
 		heap.Push(h, entry{line, ord, 1})
 		h.memsize += int64(len(line)) + 8 + 8 // add entry consumption
 		h.memsize += int64(len(line)) + 8     // add map consumption
+		return true
 	}
+	return false
 }
 
 func (h *wordsHeap) init() {
@@ -97,12 +98,12 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 		line = strings.TrimSpace(line)
 
 		if line != "" {
-			if h.MemSize() > memLimit {
+			if !h.Add(string(line), ord, memLimit) {
 				fileDump(h, fmt.Sprintf("part%v.dat", parts))
 				log.Println("chunk#", parts, "written")
 				parts++
+				h.Add(string(line), ord, memLimit)
 			}
-			h.Add(string(line), ord)
 			ord++
 		}
 
