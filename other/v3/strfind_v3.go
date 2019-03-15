@@ -13,6 +13,8 @@ import (
 	"strings"
 )
 
+////////////////////////////////////////////////////////////////////////////////
+// pre-processing stage
 // a sorter for stream data
 type entry struct {
 	str []byte
@@ -20,31 +22,89 @@ type entry struct {
 	cnt int64 // string count
 }
 
-type sortWords struct {
+// split large slice set into a group of small
+// sets to mitigate slow runtime.growslice ops
+type entrySet struct {
 	entries []entry
-	pool    []byte
-	offset  int
 }
 
-func (h *sortWords) Len() int           { return len(h.entries) }
-func (h *sortWords) Less(i, j int) bool { return bytes.Compare(h.entries[i].str, h.entries[j].str) < 0 }
-func (h *sortWords) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
+func (s *entrySet) Len() int           { return len(s.entries) }
+func (s *entrySet) Less(i, j int) bool { return bytes.Compare(s.entries[i].str, s.entries[j].str) < 0 }
+func (s *entrySet) Swap(i, j int)      { s.entries[i], s.entries[j] = s.entries[j], s.entries[i] }
+
+type entrySetReader struct {
+	entries []entry
+	head    int
+}
+
+func (esr *entrySetReader) next() error {
+	esr.head++
+	if esr.head >= len(esr.entries) {
+		return io.EOF
+	}
+	return nil
+}
+
+// memory based aggregator
+type memSortAggregator struct {
+	sets []entrySetReader
+}
+
+func (h *memSortAggregator) Len() int { return len(h.sets) }
+func (h *memSortAggregator) Less(i, j int) bool {
+	return bytes.Compare(h.sets[i].entries[h.sets[i].head].str, h.sets[j].entries[h.sets[j].head].str) < 0
+}
+func (h *memSortAggregator) Swap(i, j int)      { h.sets[i], h.sets[j] = h.sets[j], h.sets[i] }
+func (h *memSortAggregator) Push(x interface{}) { h.sets = append(h.sets, x.(entrySetReader)) }
+func (h *memSortAggregator) Pop() interface{} {
+	n := len(h.sets)
+	x := h.sets[n-1]
+	h.sets = h.sets[0 : n-1]
+	return x
+}
+
+// words sorter for big memory
+type sortWords struct {
+	sets     []entrySet
+	nextElem int
+	setSize  int
+	pool     []byte
+	offset   int
+}
+
+func (h *sortWords) Len() int { return h.nextElem }
 
 func (h *sortWords) Serialize(w io.Writer) {
-	if h.Len() > 0 {
-		log.Println("sorting", h.Len(), "elements")
-		sort.Sort(h)
+	if len(h.sets) > 0 {
+		agg := new(memSortAggregator)
+		for k := range h.sets {
+			log.Println("sorting sets#", k)
+			sort.Sort(&h.sets[k])
+			heap.Push(agg, entrySetReader{h.sets[k].entries, 0})
+		}
+		log.Println("merging sorted sets to file")
+
 		bufw := bufio.NewWriter(w)
-		last := h.entries[0]
 		written := 0
-		for k := range h.entries {
-			if bytes.Compare(h.entries[k].str, last.str) == 0 { // condense output
-				last.cnt += h.entries[k].cnt
+		esr := heap.Pop(agg).(entrySetReader)
+		last := esr.entries[esr.head]
+		if esr.next() == nil {
+			heap.Push(agg, esr)
+		}
+
+		for agg.Len() > 0 {
+			esr = heap.Pop(agg).(entrySetReader)
+			elem := &esr.entries[esr.head]
+			if bytes.Compare(elem.str, last.str) == 0 { // condense output
+				last.cnt += elem.cnt
 			} else {
 				bufw.Write(last.str)
 				fmt.Fprintf(bufw, ",%v,%v\n", last.ord, last.cnt)
-				last = h.entries[k]
+				last = *elem
 				written++
+			}
+			if esr.next() == nil {
+				heap.Push(agg, esr)
 			}
 		}
 		bufw.Write(last.str)
@@ -52,8 +112,10 @@ func (h *sortWords) Serialize(w io.Writer) {
 		written++
 		log.Println("written", written, "elements")
 		bufw.Flush()
+
 		h.offset = 0
-		h.entries = h.entries[0:0]
+		h.nextElem = 0
+		h.sets = h.sets[0:0]
 	}
 }
 
@@ -61,8 +123,14 @@ func (h *sortWords) Add(line []byte, ord int64) bool {
 	sz := len(line)
 	if h.offset+sz < cap(h.pool) { // limit memory
 		copy(h.pool[h.offset:], line)
-		h.entries = append(h.entries, entry{h.pool[h.offset : h.offset+sz], ord, 1})
+		if h.nextElem%h.setSize == 0 { // create new set
+			entries := make([]entry, 0, h.setSize)
+			h.sets = append(h.sets, entrySet{entries})
+		}
+		idx := h.nextElem / h.setSize
+		h.sets[idx].entries = append(h.sets[idx].entries, entry{h.pool[h.offset : h.offset+sz], ord, 1})
 		h.offset += sz
+		h.nextElem++
 		return true
 	}
 	return false
@@ -70,6 +138,7 @@ func (h *sortWords) Add(line []byte, ord int64) bool {
 
 func (h *sortWords) init(limit int64) {
 	h.pool = make([]byte, limit)
+	h.setSize = 1 << 20 // slice limited to 1M elements
 }
 
 // sort2Disk writes strings with it's ordinal and count
@@ -118,6 +187,8 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 	return parts
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// disk streaming stage
 type streamReader struct {
 	r   *bufio.Reader
 	str string // the head element
