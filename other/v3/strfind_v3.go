@@ -215,16 +215,16 @@ func newStreamReader(r io.Reader) *streamReader {
 	return sr
 }
 
-// pickHeap always pop the min string
-type pickHeap struct {
+// streamAggregator always pop the min string
+type streamAggregator struct {
 	entries []*streamReader
 }
 
-func (h *pickHeap) Len() int           { return len(h.entries) }
-func (h *pickHeap) Less(i, j int) bool { return h.entries[i].str < h.entries[j].str }
-func (h *pickHeap) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
-func (h *pickHeap) Push(x interface{}) { h.entries = append(h.entries, x.(*streamReader)) }
-func (h *pickHeap) Pop() interface{} {
+func (h *streamAggregator) Len() int           { return len(h.entries) }
+func (h *streamAggregator) Less(i, j int) bool { return h.entries[i].str < h.entries[j].str }
+func (h *streamAggregator) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
+func (h *streamAggregator) Push(x interface{}) { h.entries = append(h.entries, x.(*streamReader)) }
+func (h *streamAggregator) Pop() interface{} {
 	n := len(h.entries)
 	x := h.entries[n-1]
 	h.entries = h.entries[0 : n-1]
@@ -235,7 +235,7 @@ func merger(parts int) chan entry {
 	ch := make(chan entry, 4096)
 	go func() {
 		files := make([]*os.File, parts)
-		h := new(pickHeap)
+		h := new(streamAggregator)
 		for i := 0; i < parts; i++ {
 			f, err := os.Open(fmt.Sprintf("part%v.dat", i))
 			if err != nil {
