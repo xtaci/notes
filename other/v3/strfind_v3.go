@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -19,56 +20,50 @@ type entry struct {
 	cnt int64 // string count
 }
 
-type wordsHeap struct {
+type sortWords struct {
 	entries []entry
 	pool    []byte
 	offset  int
 }
 
-func (h *wordsHeap) Len() int           { return len(h.entries) }
-func (h *wordsHeap) Less(i, j int) bool { return bytes.Compare(h.entries[i].str, h.entries[j].str) < 0 }
-func (h *wordsHeap) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
-func (h *wordsHeap) Push(x interface{}) { h.entries = append(h.entries, x.(entry)) }
-func (h *wordsHeap) Pop() interface{} {
-	n := len(h.entries)
-	x := h.entries[n-1]
-	h.entries = h.entries[0 : n-1]
-	return x
-}
+func (h *sortWords) Len() int           { return len(h.entries) }
+func (h *sortWords) Less(i, j int) bool { return bytes.Compare(h.entries[i].str, h.entries[j].str) < 0 }
+func (h *sortWords) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
 
-func (h *wordsHeap) Serialize(w io.Writer) {
+func (h *sortWords) Serialize(w io.Writer) {
 	if h.Len() > 0 {
+		sort.Sort(h)
 		bufw := bufio.NewWriter(w)
-		last := heap.Pop(h).(entry)
-		for h.Len() > 0 {
-			e := heap.Pop(h).(entry)
-			if bytes.Compare(e.str, last.str) == 0 { // condense output
-				last.cnt += e.cnt
+		last := h.entries[0]
+		for k := range h.entries {
+			if bytes.Compare(h.entries[k].str, last.str) == 0 { // condense output
+				last.cnt += h.entries[k].cnt
 			} else {
 				bufw.Write(last.str)
 				fmt.Fprintf(bufw, ",%v,%v\n", last.ord, last.cnt)
-				last = e
+				last = h.entries[k]
 			}
 		}
 		bufw.Write(last.str)
 		fmt.Fprintf(bufw, ",%v,%v\n", last.ord, last.cnt)
 		bufw.Flush()
 		h.offset = 0
+		h.entries = h.entries[0:0]
 	}
 }
 
-func (h *wordsHeap) Add(line string, ord int64) bool {
+func (h *sortWords) Add(line string, ord int64) bool {
 	sz := len(line)
 	if h.offset+sz < cap(h.pool) { // limit memory
 		copy(h.pool[h.offset:], []byte(line))
-		heap.Push(h, entry{h.pool[h.offset : h.offset+sz], ord, 1})
+		h.entries = append(h.entries, entry{h.pool[h.offset : h.offset+sz], ord, 1})
 		h.offset += sz
 		return true
 	}
 	return false
 }
 
-func (h *wordsHeap) init(limit int64) {
+func (h *sortWords) init(limit int64) {
 	h.pool = make([]byte, limit)
 }
 
@@ -77,13 +72,13 @@ func (h *wordsHeap) init(limit int64) {
 // aaaa,5678,10
 func sort2Disk(r io.Reader, memLimit int64) int {
 	reader := bufio.NewReader(r)
-	h := new(wordsHeap)
+	h := new(sortWords)
 	h.init(memLimit)
 	var ord int64
 	parts := 0
 
 	// file based serialization
-	fileDump := func(hp *wordsHeap, path string) {
+	fileDump := func(hp *sortWords, path string) {
 		f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			log.Fatal(err)
