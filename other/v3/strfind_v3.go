@@ -32,9 +32,11 @@ func (h *sortWords) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries
 
 func (h *sortWords) Serialize(w io.Writer) {
 	if h.Len() > 0 {
+		log.Println("sorting", h.Len(), "elements")
 		sort.Sort(h)
 		bufw := bufio.NewWriter(w)
 		last := h.entries[0]
+		written := 0
 		for k := range h.entries {
 			if bytes.Compare(h.entries[k].str, last.str) == 0 { // condense output
 				last.cnt += h.entries[k].cnt
@@ -42,10 +44,13 @@ func (h *sortWords) Serialize(w io.Writer) {
 				bufw.Write(last.str)
 				fmt.Fprintf(bufw, ",%v,%v\n", last.ord, last.cnt)
 				last = h.entries[k]
+				written++
 			}
 		}
 		bufw.Write(last.str)
 		fmt.Fprintf(bufw, ",%v,%v\n", last.ord, last.cnt)
+		written++
+		log.Println("written", written, "elements")
 		bufw.Flush()
 		h.offset = 0
 		h.entries = h.entries[0:0]

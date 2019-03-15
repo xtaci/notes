@@ -3,15 +3,27 @@ package main
 import (
 	"bytes"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"testing"
 	"time"
 )
 
+const testfile = "10G.data"
+const Mega = 1024 * 1024
+
 func init() {
 	go http.ListenAndServe(":6060", nil)
+	f, err := os.Open(testfile)
+	if err != nil {
+		log.Println("generating", testfile)
+		generate10G()
+	} else {
+		f.Close()
+	}
 }
 
 type dummyReader struct {
@@ -48,6 +60,20 @@ func newDummyReader(cap int) *dummyReader {
 	return dr
 }
 
+func generate10G() {
+	dr := newDummyReader(10 * 1024 * Mega)
+	f, err := os.OpenFile(testfile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	io.Copy(f, dr)
+
+	if err := f.Close(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func TestFindUniqueString(t *testing.T) {
 	t0 := bytes.NewBufferString("   ")
 	findUnique(t0, 64)
@@ -62,20 +88,24 @@ func TestFindUniqueString(t *testing.T) {
 }
 
 func TestFindUnique100M(t *testing.T) {
-	dr := newDummyReader(100 * 1024 * 1024)
-	findUnique(dr, 10*1024*1024)
+	file, err := os.Open(testfile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	findUnique(io.LimitReader(file, 100*Mega), 10*Mega)
 }
 func TestFindUnique1G(t *testing.T) {
-	dr := newDummyReader(1024 * 1024 * 1024)
-	findUnique(dr, 100*1024*1024)
+	file, err := os.Open(testfile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	findUnique(io.LimitReader(file, 1000*Mega), 100*Mega)
 }
 
 func TestFindUnique10G(t *testing.T) {
-	dr := newDummyReader(10 * 1024 * 1024 * 1024)
-	findUnique(dr, 1024*1024*1024)
-}
-
-func TestFindUnique100G(t *testing.T) {
-	dr := newDummyReader(100 * 1024 * 1024 * 1024)
-	findUnique(dr, 10*1024*1024*1024)
+	file, err := os.Open(testfile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	findUnique(io.LimitReader(file, 10000*Mega), 1000*Mega)
 }
