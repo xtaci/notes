@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"container/heap"
 	"fmt"
 	"io"
@@ -13,18 +14,19 @@ import (
 
 // a heap sorter for stream data
 type entry struct {
-	str string
+	str []byte
 	ord int64
 	cnt int64 // string count
 }
 
 type wordsHeap struct {
 	entries []entry
-	memsize int64
+	pool    []byte
+	offset  int
 }
 
 func (h *wordsHeap) Len() int           { return len(h.entries) }
-func (h *wordsHeap) Less(i, j int) bool { return h.entries[i].str < h.entries[j].str }
+func (h *wordsHeap) Less(i, j int) bool { return bytes.Compare(h.entries[i].str, h.entries[j].str) < 0 }
 func (h *wordsHeap) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
 func (h *wordsHeap) Push(x interface{}) { h.entries = append(h.entries, x.(entry)) }
 func (h *wordsHeap) Pop() interface{} {
@@ -40,26 +42,34 @@ func (h *wordsHeap) Serialize(w io.Writer) {
 		last := heap.Pop(h).(entry)
 		for h.Len() > 0 {
 			e := heap.Pop(h).(entry)
-			if e.str == last.str { // condense output
+			if bytes.Compare(e.str, last.str) == 0 { // condense output
 				last.cnt += e.cnt
 			} else {
-				fmt.Fprintf(bufw, "%v,%v,%v\n", last.str, last.ord, last.cnt)
+				bufw.Write(last.str)
+				fmt.Fprintf(bufw, ",%v,%v\n", last.ord, last.cnt)
 				last = e
 			}
 		}
-		fmt.Fprintf(bufw, "%v,%v,%v\n", last.str, last.ord, last.cnt)
+		bufw.Write(last.str)
+		fmt.Fprintf(bufw, ",%v,%v\n", last.ord, last.cnt)
 		bufw.Flush()
-		h.memsize = 0
+		h.offset = 0
 	}
 }
 
-func (h *wordsHeap) Add(line string, ord int64, memlimit int64) bool {
-	if h.memsize+int64(len(line))+8+8 < memlimit { // limit memory
-		heap.Push(h, entry{line, ord, 1})
-		h.memsize += int64(len(line)) + 8 + 8 // add entry consumption
+func (h *wordsHeap) Add(line string, ord int64) bool {
+	sz := len(line)
+	if h.offset+sz < cap(h.pool) { // limit memory
+		copy(h.pool[h.offset:], []byte(line))
+		heap.Push(h, entry{h.pool[h.offset : h.offset+sz], ord, 1})
+		h.offset += sz
 		return true
 	}
 	return false
+}
+
+func (h *wordsHeap) init(limit int64) {
+	h.pool = make([]byte, limit)
 }
 
 // sort2Disk writes strings with it's ordinal and count
@@ -68,6 +78,7 @@ func (h *wordsHeap) Add(line string, ord int64, memlimit int64) bool {
 func sort2Disk(r io.Reader, memLimit int64) int {
 	reader := bufio.NewReader(r)
 	h := new(wordsHeap)
+	h.init(memLimit)
 	var ord int64
 	parts := 0
 
@@ -88,11 +99,11 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 		line = strings.TrimSpace(line)
 
 		if line != "" {
-			if !h.Add(string(line), ord, memLimit) {
+			if !h.Add(line, ord) {
 				fileDump(h, fmt.Sprintf("part%v.dat", parts))
 				log.Println("chunk#", parts, "written")
 				parts++
-				h.Add(string(line), ord, memLimit)
+				h.Add(line, ord)
 			}
 			ord++
 		}
@@ -172,7 +183,7 @@ func merger(parts int) chan entry {
 			sr := heap.Pop(h).(*streamReader)
 			ord, _ := strconv.ParseInt(sr.ord, 10, 64)
 			cnt, _ := strconv.ParseInt(sr.cnt, 10, 64)
-			ch <- entry{sr.str, ord, cnt}
+			ch <- entry{[]byte(sr.str), ord, cnt}
 			if sr.next() == nil {
 				heap.Push(h, sr)
 			}
@@ -201,11 +212,11 @@ func findUnique(r io.Reader, memLimit int64) {
 
 	// step3. loop through the sorted string chan
 	// and find the unique string with lowest ord
-	var target_str string
+	var target_str []byte
 	var target_ord int64
 	var hasSet bool
 
-	var last_str string
+	var last_str []byte
 	var last_ord int64
 	var last_cnt int64
 	if e, ok := <-ch; ok {
@@ -233,7 +244,7 @@ func findUnique(r io.Reader, memLimit int64) {
 
 	// read through the sorted string chan
 	for e := range ch {
-		if last_str == e.str {
+		if bytes.Compare(last_str, e.str) == 0 {
 			last_cnt += e.cnt
 		} else {
 			compareTarget()
@@ -247,7 +258,7 @@ func findUnique(r io.Reader, memLimit int64) {
 	compareTarget()
 
 	if hasSet {
-		log.Println("Found the first unique string:", target_str, "appears at:", target_ord)
+		log.Println("Found the first unique string:", string(target_str), "appears at:", target_ord)
 	} else {
 		log.Println("Unique string not found!")
 	}
