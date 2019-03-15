@@ -77,7 +77,7 @@ func generate10G() {
 func TestFindUniqueString(t *testing.T) {
 	t0 := bytes.NewBufferString("   ")
 	findUnique(t0, 64)
-	t1 := bytes.NewBufferString("a a b b b c") // 5
+	t1 := bytes.NewBufferString("a a b b c b") // 4
 	findUnique(t1, 64)
 	t2 := bytes.NewBufferString("a a a a a a") // no
 	findUnique(t2, 64)
