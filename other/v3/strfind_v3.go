@@ -20,55 +20,46 @@ type entry struct {
 
 type wordsHeap struct {
 	entries []entry
-	indices map[string]int // record the string idx in this heap
 	memsize int64
 }
 
 func (h *wordsHeap) Len() int           { return len(h.entries) }
 func (h *wordsHeap) Less(i, j int) bool { return h.entries[i].str < h.entries[j].str }
-func (h *wordsHeap) Swap(i, j int) {
-	h.entries[i], h.entries[j] = h.entries[j], h.entries[i]
-	h.indices[h.entries[i].str] = i
-	h.indices[h.entries[j].str] = j
-}
-func (h *wordsHeap) Push(x interface{}) {
-	h.entries = append(h.entries, x.(entry))
-	n := len(h.entries)
-	h.indices[x.(entry).str] = n - 1
-}
+func (h *wordsHeap) Swap(i, j int)      { h.entries[i], h.entries[j] = h.entries[j], h.entries[i] }
+func (h *wordsHeap) Push(x interface{}) { h.entries = append(h.entries, x.(entry)) }
 func (h *wordsHeap) Pop() interface{} {
 	n := len(h.entries)
 	x := h.entries[n-1]
-	delete(h.indices, x.str)
 	h.entries = h.entries[0 : n-1]
 	return x
 }
 
 func (h *wordsHeap) Serialize(w io.Writer) {
-	bufw := bufio.NewWriter(w)
-	for h.Len() > 0 {
-		e := heap.Pop(h).(entry)
-		fmt.Fprintf(bufw, "%v,%v,%v\n", e.str, e.ord, e.cnt)
+	if h.Len() > 0 {
+		bufw := bufio.NewWriter(w)
+		last := heap.Pop(h).(entry)
+		for h.Len() > 0 {
+			e := heap.Pop(h).(entry)
+			if e.str == last.str { // condense output
+				last.cnt += e.cnt
+			} else {
+				fmt.Fprintf(bufw, "%v,%v,%v\n", last.str, last.ord, last.cnt)
+				last = e
+			}
+		}
+		fmt.Fprintf(bufw, "%v,%v,%v\n", last.str, last.ord, last.cnt)
+		bufw.Flush()
+		h.memsize = 0
 	}
-	bufw.Flush()
-	h.memsize = 0
 }
 
 func (h *wordsHeap) Add(line string, ord int64, memlimit int64) bool {
-	if idx, ok := h.indices[line]; ok {
-		h.entries[idx].cnt++
-		return true
-	} else if h.memsize+int64(len(line))+8+8+int64(len(line))+8 < memlimit { // limit memory
+	if h.memsize+int64(len(line))+8+8 < memlimit { // limit memory
 		heap.Push(h, entry{line, ord, 1})
 		h.memsize += int64(len(line)) + 8 + 8 // add entry consumption
-		h.memsize += int64(len(line)) + 8     // add map consumption
 		return true
 	}
 	return false
-}
-
-func (h *wordsHeap) init() {
-	h.indices = make(map[string]int)
 }
 
 // sort2Disk writes strings with it's ordinal and count
@@ -77,7 +68,6 @@ func (h *wordsHeap) init() {
 func sort2Disk(r io.Reader, memLimit int64) int {
 	reader := bufio.NewReader(r)
 	h := new(wordsHeap)
-	h.init()
 	var ord int64
 	parts := 0
 
