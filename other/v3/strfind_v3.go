@@ -117,7 +117,6 @@ func (h *sortWords) Serialize(w io.Writer) {
 		h.sets = nil
 		h.setUsage = 0
 		h.stringUsage = 0
-		runtime.GC()
 	}
 }
 
@@ -171,6 +170,7 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 			log.Fatal(err)
 		}
 		hp.Serialize(f)
+		runtime.GC()
 		if err := f.Close(); err != nil {
 			log.Fatal(err)
 		}
