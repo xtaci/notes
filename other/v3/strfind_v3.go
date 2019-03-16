@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -48,7 +49,7 @@ func (esr *entrySetReader) next() bool {
 
 // memory based aggregator
 type memSortAggregator struct {
-	sets []entrySetReader
+	sets []*entrySetReader
 }
 
 func (h *memSortAggregator) Len() int { return len(h.sets) }
@@ -56,7 +57,7 @@ func (h *memSortAggregator) Less(i, j int) bool {
 	return h.sets[i].entries[h.sets[i].head].str < h.sets[j].entries[h.sets[j].head].str
 }
 func (h *memSortAggregator) Swap(i, j int)      { h.sets[i], h.sets[j] = h.sets[j], h.sets[i] }
-func (h *memSortAggregator) Push(x interface{}) { h.sets = append(h.sets, x.(entrySetReader)) }
+func (h *memSortAggregator) Push(x interface{}) { h.sets = append(h.sets, x.(*entrySetReader)) }
 func (h *memSortAggregator) Pop() interface{} {
 	n := len(h.sets)
 	x := h.sets[n-1]
@@ -83,25 +84,24 @@ func (h *sortWords) Serialize(w io.Writer) {
 		for k := range h.sets {
 			log.Println("sorting sets#", k)
 			sort.Sort(&h.sets[k])
-			heap.Push(agg, entrySetReader{h.sets[k].entries[:h.sets[k].length], 0})
+			heap.Push(agg, &entrySetReader{h.sets[k].entries[:h.sets[k].length], 0})
 		}
 		log.Println("merging sorted sets to file")
 
-		bufw := bufio.NewWriter(w)
 		written := 0
-		esr := heap.Pop(agg).(entrySetReader)
+		esr := heap.Pop(agg).(*entrySetReader)
 		last := esr.entries[esr.head]
 		if esr.next() {
 			heap.Push(agg, esr)
 		}
 
 		for agg.Len() > 0 {
-			esr = heap.Pop(agg).(entrySetReader)
+			esr = heap.Pop(agg).(*entrySetReader)
 			elem := &esr.entries[esr.head]
 			if elem.str == last.str { // condense output
 				last.cnt += elem.cnt
 			} else {
-				fmt.Fprintf(bufw, "%v,%v,%v\n", last.str, last.ord, last.cnt)
+				fmt.Fprintf(w, "%v,%v,%v\n", last.str, last.ord, last.cnt)
 				last = *elem
 				written++
 			}
@@ -109,15 +109,15 @@ func (h *sortWords) Serialize(w io.Writer) {
 				heap.Push(agg, esr)
 			}
 		}
-		fmt.Fprintf(bufw, "%v,%v,%v\n", last.str, last.ord, last.cnt)
+		fmt.Fprintf(w, "%v,%v,%v\n", last.str, last.ord, last.cnt)
 		written++
 		log.Println("written", written, "elements")
-		bufw.Flush()
 
 		h.nextElem = 0
 		h.sets = nil
 		h.setUsage = 0
 		h.stringUsage = 0
+		runtime.GC()
 	}
 }
 
