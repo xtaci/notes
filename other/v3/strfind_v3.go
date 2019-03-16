@@ -26,9 +26,10 @@ type entry struct {
 // sets to mitigate slow runtime.growslice ops
 type entrySet struct {
 	entries []entry
+	length  int
 }
 
-func (s *entrySet) Len() int           { return len(s.entries) }
+func (s *entrySet) Len() int           { return s.length }
 func (s *entrySet) Less(i, j int) bool { return bytes.Compare(s.entries[i].str, s.entries[j].str) < 0 }
 func (s *entrySet) Swap(i, j int)      { s.entries[i], s.entries[j] = s.entries[j], s.entries[i] }
 
@@ -80,7 +81,7 @@ func (h *sortWords) Serialize(w io.Writer) {
 		for k := range h.sets {
 			log.Println("sorting sets#", k)
 			sort.Sort(&h.sets[k])
-			heap.Push(agg, entrySetReader{h.sets[k].entries, 0})
+			heap.Push(agg, entrySetReader{h.sets[k].entries[:h.sets[k].length], 0})
 		}
 		log.Println("merging sorted sets to file")
 
@@ -124,11 +125,13 @@ func (h *sortWords) Add(line []byte, ord int64) bool {
 	if h.offset+sz < cap(h.pool) { // limit memory
 		copy(h.pool[h.offset:], line)
 		if h.nextElem%h.setSize == 0 { // create new set
-			entries := make([]entry, 0, h.setSize)
-			h.sets = append(h.sets, entrySet{entries})
+			entries := make([]entry, h.setSize)
+			h.sets = append(h.sets, entrySet{entries, 0})
 		}
-		idx := h.nextElem / h.setSize
-		h.sets[idx].entries = append(h.sets[idx].entries, entry{h.pool[h.offset : h.offset+sz], ord, 1})
+		sidx := h.nextElem / h.setSize
+		eidx := h.nextElem % h.setSize
+		h.sets[sidx].entries[eidx] = entry{h.pool[h.offset : h.offset+sz], ord, 1}
+		h.sets[sidx].length++
 		h.offset += sz
 		h.nextElem++
 		return true
