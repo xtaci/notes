@@ -15,7 +15,7 @@ import (
 
 ////////////////////////////////////////////////////////////////////////////////
 // pre-processing stage
-// a sorter for stream data
+// an in-memory sorter
 type entry struct {
 	str string
 	ord int64
@@ -121,8 +121,8 @@ func (h *sortWords) Serialize(w io.Writer) {
 	}
 }
 
+// Add controls the memory for every input
 func (h *sortWords) Add(line []byte, ord int64) bool {
-	// memory control
 	if h.nextElem%h.setSize == 0 { // create new set
 		if h.setUsage+h.stringUsage+h.setMemSize > h.limit { // check new set creation
 			return false
