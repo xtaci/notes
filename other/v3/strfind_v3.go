@@ -38,12 +38,12 @@ type entrySetReader struct {
 	head    int
 }
 
-func (esr *entrySetReader) next() error {
+func (esr *entrySetReader) next() bool {
 	esr.head++
 	if esr.head >= len(esr.entries) {
-		return io.EOF
+		return false
 	}
-	return nil
+	return true
 }
 
 // memory based aggregator
@@ -91,7 +91,7 @@ func (h *sortWords) Serialize(w io.Writer) {
 		written := 0
 		esr := heap.Pop(agg).(entrySetReader)
 		last := esr.entries[esr.head]
-		if esr.next() == nil {
+		if esr.next() {
 			heap.Push(agg, esr)
 		}
 
@@ -105,7 +105,7 @@ func (h *sortWords) Serialize(w io.Writer) {
 				last = *elem
 				written++
 			}
-			if esr.next() == nil {
+			if esr.next() {
 				heap.Push(agg, esr)
 			}
 		}
@@ -146,10 +146,13 @@ func (h *sortWords) Add(line []byte, ord int64) bool {
 }
 
 func (h *sortWords) init(limit int64) {
-	h.limit = limit
 	e := entry{}
 	h.setSize = 1 << 20 // single set limited to 1M elements
 	h.setMemSize = int64(unsafe.Sizeof(e)) * h.setSize
+	h.limit = limit
+	if h.limit < h.setMemSize {
+		h.limit = 2 * h.setMemSize
+	}
 }
 
 // sort2Disk writes strings with it's ordinal and count
@@ -200,28 +203,27 @@ func sort2Disk(r io.Reader, memLimit int64) int {
 ////////////////////////////////////////////////////////////////////////////////
 // disk streaming stage
 type streamReader struct {
-	r   *bufio.Reader
-	str string // the head element
-	ord string
-	cnt string
+	scanner *bufio.Scanner
+	str     string // the head element
+	ord     string
+	cnt     string
 }
 
-func (sr *streamReader) next() error {
-	if line, err := sr.r.ReadString('\n'); err == nil {
-		line = strings.TrimSpace(line)
-		strs := strings.Split(line, ",")
+func (sr *streamReader) next() bool {
+	if sr.scanner.Scan() {
+		strs := strings.Split(sr.scanner.Text(), ",")
 		sr.str = strs[0]
 		sr.ord = strs[1]
 		sr.cnt = strs[2]
-		return nil
-	} else {
-		return err
+		return true
 	}
+	return false
 }
 
 func newStreamReader(r io.Reader) *streamReader {
 	sr := new(streamReader)
-	sr.r = bufio.NewReader(r)
+	sr.scanner = bufio.NewScanner(r)
+	sr.scanner.Split(bufio.ScanLines)
 	return sr
 }
 
@@ -262,7 +264,7 @@ func merger(parts int) chan entry {
 			ord, _ := strconv.ParseInt(sr.ord, 10, 64)
 			cnt, _ := strconv.ParseInt(sr.cnt, 10, 64)
 			ch <- entry{sr.str, ord, cnt}
-			if sr.next() == nil {
+			if sr.next() {
 				heap.Push(h, sr)
 			}
 		}

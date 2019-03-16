@@ -76,15 +76,15 @@ func generate10G() {
 
 func TestFindUniqueString(t *testing.T) {
 	t0 := bytes.NewBufferString("   ")
-	findUnique(t0, 64)
+	findUnique(t0, 128*Mega)
 	t1 := bytes.NewBufferString("a a b b c b") // 4
-	findUnique(t1, 64)
+	findUnique(t1, 128*Mega)
 	t2 := bytes.NewBufferString("a a a a a a") // no
-	findUnique(t2, 64)
+	findUnique(t2, 128*Mega)
 	t3 := bytes.NewBufferString("a b c d e a") //1
-	findUnique(t3, 64)
+	findUnique(t3, 128*Mega)
 	t4 := bytes.NewBufferString("a a a a a b") // 5
-	findUnique(t4, 64)
+	findUnique(t4, 128*Mega)
 }
 
 func TestFindUnique100M(t *testing.T) {
