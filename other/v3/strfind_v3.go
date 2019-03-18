@@ -53,8 +53,8 @@ type entry struct {
 type dataSet struct {
 	buf         []byte
 	idxWritten  int
-	dataWritten int // point to last non-writable place, -1 will be writable
-	dataPtr     int
+	dataWritten int
+	dataPtr     int // point to last non-writable place, dataPtr -1 will be writable
 
 	idxPtr  int // point to next index place
 	idxSize int
