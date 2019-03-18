@@ -97,8 +97,7 @@ func (s *dataSet) e(i int) rawEntry {
 
 // return the ith element in text form
 func (s *dataSet) get(i int) entry {
-	e := s.e(i)
-	v := rawValue(e.value(s.buf))
+	v := s.e(i).value(s.buf)
 	return entry{v.line(), v.ord()}
 }
 
