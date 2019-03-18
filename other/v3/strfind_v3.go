@@ -50,7 +50,7 @@ type entry struct {
 // for limiting memory usage, we write content backwords
 // and write idx forwards, as:
 // [key0,key1,...keyN,..... valueN, .... value0]
-type entrySet struct {
+type dataSet struct {
 	buf         []byte
 	idxWritten  int
 	dataWritten int // point to last non-writable place, -1 will be writable
@@ -61,15 +61,15 @@ type entrySet struct {
 	swapbuf []byte
 }
 
-func newEntrySet(sz int) *entrySet {
-	e := new(entrySet)
+func newDataSet(sz int) *dataSet {
+	e := new(dataSet)
 	e.buf = make([]byte, sz)
 	e.dataPtr = sz
 	e.swapbuf = make([]byte, entrySize)
 	return e
 }
 
-func (s *entrySet) Add(line []byte, ord int64) bool {
+func (s *dataSet) Add(line []byte, ord int64) bool {
 	sz := len(line) + 8
 	if s.idxWritten+s.dataWritten+sz+entrySize >= len(s.buf) {
 		return false
@@ -91,48 +91,48 @@ func (s *entrySet) Add(line []byte, ord int64) bool {
 }
 
 // return the ith entry in binary form
-func (s *entrySet) e(i int) rawEntry {
+func (s *dataSet) e(i int) rawEntry {
 	return rawEntry(s.buf[i*entrySize : i*entrySize+entrySize])
 }
 
 // return the ith element in text form
-func (s *entrySet) get(i int) entry {
+func (s *dataSet) get(i int) entry {
 	e := s.e(i)
 	v := rawValue(e.value(s.buf))
 	return entry{v.line(), v.ord()}
 }
 
-func (s *entrySet) Len() int { return s.idxWritten / entrySize }
-func (s *entrySet) Less(i, j int) bool {
+func (s *dataSet) Len() int { return s.idxWritten / entrySize }
+func (s *dataSet) Less(i, j int) bool {
 	v1 := s.e(i).value(s.buf)
 	v2 := s.e(j).value(s.buf)
 	return bytes.Compare(v1.line(), v2.line()) < 0
 }
 
-func (s *entrySet) Swap(i, j int) {
+func (s *dataSet) Swap(i, j int) {
 	copy(s.swapbuf, s.e(i))
 	copy(s.e(i), s.e(j))
 	copy(s.e(j), s.swapbuf)
 }
 
-// set reader
-type entrySetReader struct {
-	set  *entrySet
+// data set reader
+type dataSetReader struct {
+	set  *dataSet
 	head int
 	elem entry
 }
 
-func newEntrySetReader(set *entrySet) *entrySetReader {
+func newDataSetReader(set *dataSet) *dataSetReader {
 	if set.Len() == 0 {
 		return nil
 	}
-	esr := new(entrySetReader)
+	esr := new(dataSetReader)
 	esr.set = set
 	esr.elem = set.get(0)
 	return esr
 }
 
-func (esr *entrySetReader) next() bool {
+func (esr *dataSetReader) next() bool {
 	esr.head++
 	if esr.head >= esr.set.Len() {
 		return false
@@ -143,7 +143,7 @@ func (esr *entrySetReader) next() bool {
 
 // memory based aggregator
 type memSortAggregator struct {
-	sets []*entrySetReader
+	sets []*dataSetReader
 }
 
 func (h *memSortAggregator) Len() int { return len(h.sets) }
@@ -151,7 +151,7 @@ func (h *memSortAggregator) Less(i, j int) bool {
 	return bytes.Compare(h.sets[i].elem.str, h.sets[j].elem.str) < 0
 }
 func (h *memSortAggregator) Swap(i, j int)      { h.sets[i], h.sets[j] = h.sets[j], h.sets[i] }
-func (h *memSortAggregator) Push(x interface{}) { h.sets = append(h.sets, x.(*entrySetReader)) }
+func (h *memSortAggregator) Push(x interface{}) { h.sets = append(h.sets, x.(*dataSetReader)) }
 func (h *memSortAggregator) Pop() interface{} {
 	n := len(h.sets)
 	x := h.sets[n-1]
@@ -161,7 +161,7 @@ func (h *memSortAggregator) Pop() interface{} {
 
 // words sorter for big memory
 type sortWords struct {
-	sets    []*entrySet
+	sets    []*dataSet
 	setSize int
 	limit   int // max total memory usage
 }
@@ -180,12 +180,12 @@ func (h *sortWords) Serialize(w io.Writer) {
 		for k := range h.sets {
 			log.Println("sorting sets#", k)
 			sort.Sort(h.sets[k])
-			heap.Push(agg, newEntrySetReader(h.sets[k]))
+			heap.Push(agg, newDataSetReader(h.sets[k]))
 		}
 		log.Println("merging sorted sets to file")
 
 		written := 0
-		esr := heap.Pop(agg).(*entrySetReader)
+		esr := heap.Pop(agg).(*dataSetReader)
 		last := esr.elem
 		last_cnt := 1
 		if esr.next() {
@@ -193,7 +193,7 @@ func (h *sortWords) Serialize(w io.Writer) {
 		}
 
 		for agg.Len() > 0 {
-			esr = heap.Pop(agg).(*entrySetReader)
+			esr = heap.Pop(agg).(*dataSetReader)
 			elem := esr.elem
 			if bytes.Compare(elem.str, last.str) == 0 { // condense output
 				last_cnt++
@@ -217,7 +217,7 @@ func (h *sortWords) Serialize(w io.Writer) {
 // Add controls the memory for every input
 func (h *sortWords) Add(line []byte, ord int64) bool {
 	if h.sets == nil { // init first one
-		h.sets = []*entrySet{newEntrySet(h.setSize)}
+		h.sets = []*dataSet{newDataSet(h.setSize)}
 	}
 
 	set := h.sets[len(h.sets)-1]
@@ -225,7 +225,7 @@ func (h *sortWords) Add(line []byte, ord int64) bool {
 		if h.setSize*(len(h.sets)+1) > h.limit { // limit reached
 			return false
 		}
-		newSet := newEntrySet(h.setSize)
+		newSet := newDataSet(h.setSize)
 		h.sets = append(h.sets, newSet)
 		newSet.Add(line, ord)
 	}
