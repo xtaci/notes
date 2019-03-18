@@ -19,17 +19,24 @@ import (
 // pre-processing stage
 // an in-memory sorter
 
+// key-value construction
 // rawEntry binary format:
-// ord int64
 // bytesSize int32
 // bytesPtr int32
 type rawEntry []byte
 
-func (e rawEntry) ord() int64              { return int64(binary.LittleEndian.Uint64(e[:])) }
-func (e rawEntry) sz() int32               { return int32(binary.LittleEndian.Uint32(e[8:])) }
-func (e rawEntry) ptr() int32              { return int32(binary.LittleEndian.Uint32(e[12:])) }
-func (e rawEntry) bytes(buf []byte) []byte { return buf[e.ptr():][:e.sz()] }
-func (e rawEntry) Len() int                { return 16 }
+func (e rawEntry) sz() int32                 { return int32(binary.LittleEndian.Uint32(e[:])) }
+func (e rawEntry) ptr() int32                { return int32(binary.LittleEndian.Uint32(e[4:])) }
+func (e rawEntry) value(buf []byte) rawValue { return buf[e.ptr():][:e.sz()] }
+func (e rawEntry) Len() int                  { return 8 }
+
+// value binary format
+// ord int64
+// line []byte
+type rawValue []byte
+
+func (v rawValue) ord() int64   { return int64(binary.LittleEndian.Uint64(v[:])) }
+func (v rawValue) line() []byte { return v[8:] }
 
 type entry struct {
 	str []byte
@@ -61,17 +68,17 @@ func newEntrySet(sz int) *entrySet {
 }
 
 func (s *entrySet) Add(line []byte, ord int64) bool {
-	sz := len(line)
+	sz := len(line) + 8
 	if s.idxWritten+s.dataWritten+sz+s.idxMeta.Len() >= len(s.buf) {
 		return false
 	}
 
 	// write data
-	copy(s.buf[s.dataPtr:], line)
+	binary.LittleEndian.PutUint64(s.buf[s.dataPtr:], uint64(ord))
+	copy(s.buf[s.dataPtr+8:], line)
 	// write idx
-	binary.LittleEndian.PutUint64(s.buf[s.idxPtr:], uint64(ord))
-	binary.LittleEndian.PutUint32(s.buf[s.idxPtr+8:], uint32(len(line)))
-	binary.LittleEndian.PutUint32(s.buf[s.idxPtr+12:], uint32(s.dataPtr))
+	binary.LittleEndian.PutUint32(s.buf[s.idxPtr:], uint32(sz))
+	binary.LittleEndian.PutUint32(s.buf[s.idxPtr+4:], uint32(s.dataPtr))
 
 	// pointer update
 	s.dataWritten += sz
@@ -89,12 +96,15 @@ func (s *entrySet) e(i int) rawEntry {
 // return the ith element in text form
 func (s *entrySet) get(i int) entry {
 	e := rawEntry(s.buf[len(s.buf)-s.idxMeta.Len()*(i+1):][:s.idxMeta.Len()])
-	return entry{e.bytes(s.buf), e.ord()}
+	v := rawValue(e.value(s.buf))
+	return entry{v.line(), v.ord()}
 }
 
 func (s *entrySet) Len() int { return s.idxWritten / s.idxMeta.Len() }
 func (s *entrySet) Less(i, j int) bool {
-	return bytes.Compare(s.e(i).bytes(s.buf), s.e(j).bytes(s.buf)) < 0
+	v1 := s.e(i).value(s.buf)
+	v2 := s.e(j).value(s.buf)
+	return bytes.Compare(v1.line(), v2.line()) < 0
 }
 
 func (s *entrySet) Swap(i, j int) {
