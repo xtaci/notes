@@ -30,7 +30,7 @@ const entrySize = 8
 func (e rawEntry) sz() int32  { return int32(binary.LittleEndian.Uint32(e[:])) }
 func (e rawEntry) ptr() int32 { return int32(binary.LittleEndian.Uint32(e[4:])) }
 
-// value binds value buf
+// value binds to specific bytes buffer
 func (e rawEntry) value(buf []byte) rawValue { return buf[e.ptr():][:e.sz()] }
 
 // value binary format
@@ -47,8 +47,8 @@ type entry struct {
 }
 
 // split large slice set into a group of small sets
-// for limiting memory usage, we write content forth
-// and write idx backwords, as:
+// for limiting memory usage, we write content backwords
+// and write idx forwards, as:
 // [key0,key1,...keyN,..... valueN, .... value0]
 type entrySet struct {
 	buf         []byte
