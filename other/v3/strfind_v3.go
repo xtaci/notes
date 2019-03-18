@@ -25,10 +25,13 @@ import (
 // bytesPtr int32
 type rawEntry []byte
 
-func (e rawEntry) sz() int32                 { return int32(binary.LittleEndian.Uint32(e[:])) }
-func (e rawEntry) ptr() int32                { return int32(binary.LittleEndian.Uint32(e[4:])) }
+const entrySize = 8
+
+func (e rawEntry) sz() int32  { return int32(binary.LittleEndian.Uint32(e[:])) }
+func (e rawEntry) ptr() int32 { return int32(binary.LittleEndian.Uint32(e[4:])) }
+
+// value binds value buf
 func (e rawEntry) value(buf []byte) rawValue { return buf[e.ptr():][:e.sz()] }
-func (e rawEntry) Len() int                  { return 8 }
 
 // value binary format
 // ord int64
@@ -44,63 +47,62 @@ type entry struct {
 }
 
 // split large slice set into a group of small sets
-// for limiting memory usage, we write content forth to back
-// and write idx from back to forth, as:
-// [string,string, ...... idx100, idx99, idx1]
+// for limiting memory usage, we write content forth
+// and write idx backwords, as:
+// [key0,key1,...keyN,..... valueN, .... value0]
 type entrySet struct {
 	buf         []byte
 	idxWritten  int
-	dataWritten int
-	dataPtr     int // point to next writable place, as same below
+	dataWritten int // point to last non-writable place, -1 will be writable
+	dataPtr     int
 
-	idxPtr  int
+	idxPtr  int // point to next index place
 	idxSize int
-	idxMeta rawEntry // empty element
 	swapbuf []byte
 }
 
 func newEntrySet(sz int) *entrySet {
 	e := new(entrySet)
 	e.buf = make([]byte, sz)
-	e.idxPtr = sz - e.idxMeta.Len()
-	e.swapbuf = make([]byte, e.idxMeta.Len())
+	e.dataPtr = sz
+	e.swapbuf = make([]byte, entrySize)
 	return e
 }
 
 func (s *entrySet) Add(line []byte, ord int64) bool {
 	sz := len(line) + 8
-	if s.idxWritten+s.dataWritten+sz+s.idxMeta.Len() >= len(s.buf) {
+	if s.idxWritten+s.dataWritten+sz+entrySize >= len(s.buf) {
 		return false
 	}
 
 	// write data
+	s.dataPtr -= sz
+	s.dataWritten += sz
 	binary.LittleEndian.PutUint64(s.buf[s.dataPtr:], uint64(ord))
 	copy(s.buf[s.dataPtr+8:], line)
+
 	// write idx
 	binary.LittleEndian.PutUint32(s.buf[s.idxPtr:], uint32(sz))
 	binary.LittleEndian.PutUint32(s.buf[s.idxPtr+4:], uint32(s.dataPtr))
+	s.idxPtr += entrySize
+	s.idxWritten += entrySize
 
-	// pointer update
-	s.dataWritten += sz
-	s.dataPtr += sz
-	s.idxWritten += s.idxMeta.Len()
-	s.idxPtr -= s.idxMeta.Len()
 	return true
 }
 
 // return the ith entry in binary form
 func (s *entrySet) e(i int) rawEntry {
-	return rawEntry(s.buf[len(s.buf)-s.idxMeta.Len()*(i+1):][:s.idxMeta.Len()])
+	return rawEntry(s.buf[i*entrySize : i*entrySize+entrySize])
 }
 
 // return the ith element in text form
 func (s *entrySet) get(i int) entry {
-	e := rawEntry(s.buf[len(s.buf)-s.idxMeta.Len()*(i+1):][:s.idxMeta.Len()])
+	e := s.e(i)
 	v := rawValue(e.value(s.buf))
 	return entry{v.line(), v.ord()}
 }
 
-func (s *entrySet) Len() int { return s.idxWritten / s.idxMeta.Len() }
+func (s *entrySet) Len() int { return s.idxWritten / entrySize }
 func (s *entrySet) Less(i, j int) bool {
 	v1 := s.e(i).value(s.buf)
 	v2 := s.e(j).value(s.buf)
